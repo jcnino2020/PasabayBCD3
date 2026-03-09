@@ -93,8 +93,11 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (!mounted) return;
+      // For debugging, print the actual error to the console.
+      debugPrint('Login failed with error: $e');
       setState(() {
-        _errorMessage = 'Could not connect to the server. Please check your connection.';
+        // Provide a more helpful error message for non-network errors.
+        _errorMessage = 'An error occurred while processing login. Please try again.';
         _isLoading = false;
       });
     } finally {

@@ -47,6 +47,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
   void _showTopUpModal(BuildContext context, DataStore dataStore) {
     int selectedAmount = 200;
     String selectedMethod = 'GCash';
+    bool isToppingUp = false;
 
     showModalBottomSheet(
       context: context,
@@ -105,25 +106,64 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Update DataStore
-                      setState(() {
-                        dataStore.balance += selectedAmount;
-                        dataStore.transactions.insert(0, Transaction(
-                          date: 'Just now',
-                          label: 'Top Up via $selectedMethod',
-                          amount: selectedAmount.toDouble(),
-                        ));
-                      });
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Successfully added ₱$selectedAmount to wallet!'),
-                          backgroundColor: const Color(0xFF10B981),
-                        ),
-                      );
+                    onPressed: isToppingUp ? null : () async {
+                      if (dataStore.userId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Error: User not logged in.'), backgroundColor: Colors.red),
+                        );
+                        return;
+                      }
+
+                      setModalState(() => isToppingUp = true);
+
+                      try {
+                        final response = await http.post(
+                          Uri.parse('http://ov3.238.mytemp.website/pasabaybcd/api/topup.php'),
+                          headers: {'Content-Type': 'application/json'},
+                          body: json.encode({
+                            'user_id': dataStore.userId,
+                            'amount': selectedAmount,
+                            'payment_method': selectedMethod,
+                          }),
+                        );
+
+                        if (!context.mounted) return;
+
+                        if (response.statusCode == 200) {
+                          // The API call was successful, now update the UI
+                          setState(() {
+                            dataStore.balance += selectedAmount;
+                            _transactionsFuture = _fetchTransactions(); // Re-fetch transactions
+                          });
+
+                          Navigator.pop(context); // Close the modal
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Successfully added ₱$selectedAmount to wallet!'),
+                              backgroundColor: const Color(0xFF10B981),
+                            ),
+                          );
+                        } else {
+                          final errorData = json.decode(response.body);
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Top-up failed: ${errorData['error'] ?? 'Unknown error'}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Could not connect to server.'), backgroundColor: Colors.red),
+                        );
+                      }
                     },
-                    child: const Text('CONFIRM TOP UP'),
+                    child: isToppingUp
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('CONFIRM TOP UP'),
                   ),
                 ),
                 const SizedBox(height: 20),

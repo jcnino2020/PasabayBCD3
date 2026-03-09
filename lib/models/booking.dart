@@ -82,7 +82,14 @@ class DataStore {
     merchantName = userData['merchant_name'] ?? 'N/A';
     marketLocation = userData['market_location'] ?? 'N/A';
     isKycVerified = (userData['is_kyc_verified'] == 1 || userData['is_kyc_verified'] == true);
-    balance = (userData['wallet_balance'] as num?)?.toDouble() ?? 0.0;
+    
+    // Handle wallet_balance which may be a String or a number from JSON
+    final dynamic balanceValue = userData['wallet_balance'];
+    if (balanceValue is String) {
+      balance = double.tryParse(balanceValue) ?? 0.0;
+    } else if (balanceValue is num) {
+      balance = balanceValue.toDouble();
+    }
   }
 
   void addBooking(Booking booking) {
