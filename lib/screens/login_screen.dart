@@ -4,6 +4,10 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+import '../models/booking.dart';
 import 'main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -60,16 +64,44 @@ class _LoginScreenState extends State<LoginScreen> {
     // Show loading spinner - setState() rebuilds the widget with isLoading = true
     setState(() => _isLoading = true);
 
-    // Simulate a network call delay
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final response = await http.post(
+        Uri.parse('http://ov3.238.mytemp.website/pasabaybcd/api/login.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'email': email,
+          'password': password,
+        }),
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    // Navigate to the main trip matching screen after login
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const MainScreen()),
-    );
+      if (response.statusCode == 200) {
+        final userData = json.decode(response.body);
+        DataStore().setUserData(userData); // Update the central data store
+        
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        setState(() {
+          _errorMessage = errorData['error'] ?? 'An unknown error occurred.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Could not connect to the server. Please check your connection.';
+        _isLoading = false;
+      });
+    } finally {
+      if (mounted && _isLoading) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override

@@ -36,6 +36,15 @@ class Transaction {
     required this.label,
     required this.amount,
   });
+
+  // Factory constructor to create a Transaction from a JSON object
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
+      date: json['formatted_date'] ?? 'N/A',
+      label: json['label'] ?? 'Unknown Transaction',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 }
 
 List<Transaction> sampleTransactions = [
@@ -54,6 +63,7 @@ class DataStore {
   factory DataStore() => _instance;
   DataStore._internal();
 
+  int? userId;
   // User Profile
   String merchantName = "Aling Nena's Stall";
   String marketLocation = 'Libertad Market, Aisle 8';
@@ -66,6 +76,14 @@ class DataStore {
 
   // Active Trip
   Booking? activeBooking;
+
+  void setUserData(Map<String, dynamic> userData) {
+    userId = userData['id'] as int?;
+    merchantName = userData['merchant_name'] ?? 'N/A';
+    marketLocation = userData['market_location'] ?? 'N/A';
+    isKycVerified = (userData['is_kyc_verified'] == 1 || userData['is_kyc_verified'] == true);
+    balance = (userData['wallet_balance'] as num?)?.toDouble() ?? 0.0;
+  }
 
   void addBooking(Booking booking) {
     activeBooking = booking;

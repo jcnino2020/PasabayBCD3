@@ -6,7 +6,6 @@
 import 'package:flutter/material.dart';
 import '../models/truck.dart';
 import '../models/booking.dart';
-import '../widgets/bottom_nav_bar.dart';
 import 'main_screen.dart';
 
 class LiveTrackingScreen extends StatefulWidget {
@@ -432,10 +431,6 @@ class _MapPainter extends CustomPainter {
       ..strokeWidth = 6
       ..style = PaintingStyle.stroke;
 
-    final dottedRoutePaint = Paint()
-      ..color = const Color(0xFF1A56DB)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
 
     // Draw a few road lines to simulate a street map
     canvas.drawLine(

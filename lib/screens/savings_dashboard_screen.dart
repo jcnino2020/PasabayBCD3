@@ -4,8 +4,10 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import '../models/booking.dart';
-import '../widgets/bottom_nav_bar.dart';
 
 class SavingsDashboardScreen extends StatefulWidget {
   const SavingsDashboardScreen({super.key});
@@ -16,9 +18,31 @@ class SavingsDashboardScreen extends StatefulWidget {
 }
 
 class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
+  late Future<List<Transaction>> _transactionsFuture;
+  final DataStore _dataStore = DataStore();
 
-  // Simulate wallet balance state
-  // Data is now pulled from DataStore in build
+  @override
+  void initState() {
+    super.initState();
+    _transactionsFuture = _fetchTransactions();
+  }
+
+  Future<List<Transaction>> _fetchTransactions() async {
+    if (_dataStore.userId == null) {
+      return []; // Return empty list if user is not logged in
+    }
+    final uri = Uri.parse('http://ov3.238.mytemp.website/pasabaybcd/api/transactions.php')
+        .replace(queryParameters: {'user_id': _dataStore.userId.toString()});
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Transaction.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load transactions');
+    }
+  }
 
   void _showTopUpModal(BuildContext context, DataStore dataStore) {
     int selectedAmount = 200;
@@ -156,15 +180,6 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dataStore = DataStore();
-    
-    // Calculate dynamic stats based on transaction history
-    final expenseTransactions = dataStore.transactions.where((t) => t.amount < 0).toList();
-    final tripsCount = expenseTransactions.length;
-    final totalSpent = expenseTransactions.fold(0.0, (sum, t) => sum + t.amount.abs());
-    // Mock savings calculation (e.g., 20% saved compared to solo booking)
-    final estimatedSavings = totalSpent * 0.20; 
-    
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFF),
       body: SafeArea(
@@ -222,7 +237,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '₱${dataStore.totalSavings.toStringAsFixed(0)}',
+                      '₱${_dataStore.totalSavings.toStringAsFixed(0)}',
                       style: const TextStyle(
                         fontSize: 38,
                         fontWeight: FontWeight.w800,
@@ -234,7 +249,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'BALANCE: ₱${dataStore.balance.toStringAsFixed(0)}',
+                          'BALANCE: ₱${_dataStore.balance.toStringAsFixed(0)}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -243,7 +258,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                         ),
                         // Top Up button
                         GestureDetector(
-                          onTap: () => _showTopUpModal(context, dataStore),
+                          onTap: () => _showTopUpModal(context, _dataStore),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 6),
@@ -270,19 +285,44 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
             const SizedBox(height: 24),
 
             // Quick stats row
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                children: [
-                  _buildStatCard(
-                      'Trips', '$tripsCount', Icons.local_shipping_outlined),
-                  const SizedBox(width: 12),
-                  _buildStatCard(
-                      'Est. Savings', '₱${estimatedSavings.toStringAsFixed(0)}', Icons.savings_outlined),
-                  const SizedBox(width: 12),
-                  _buildStatCard('Total Spent', '₱${totalSpent.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined),
-                ],
-              ),
+            FutureBuilder<List<Transaction>>(
+                future: _transactionsFuture,
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    // Show placeholders while loading
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          _buildStatCard('Trips', '...', Icons.local_shipping_outlined),
+                          const SizedBox(width: 12),
+                          _buildStatCard('Est. Savings', '...', Icons.savings_outlined),
+                          const SizedBox(width: 12),
+                          _buildStatCard('Total Spent', '...', Icons.account_balance_wallet_outlined),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final transactions = snapshot.data!;
+                  final expenseTransactions = transactions.where((t) => t.amount < 0).toList();
+                  final tripsCount = expenseTransactions.length;
+                  final totalSpent = expenseTransactions.fold(0.0, (sum, t) => sum + t.amount.abs());
+                  final estimatedSavings = totalSpent * 0.20;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        _buildStatCard('Trips', '$tripsCount', Icons.local_shipping_outlined),
+                        const SizedBox(width: 12),
+                        _buildStatCard('Est. Savings', '₱${estimatedSavings.toStringAsFixed(0)}', Icons.savings_outlined),
+                        const SizedBox(width: 12),
+                        _buildStatCard('Total Spent', '₱${totalSpent.toStringAsFixed(0)}', Icons.account_balance_wallet_outlined),
+                      ],
+                    ),
+                  );
+                }
             ),
             const SizedBox(height: 24),
 
@@ -316,12 +356,12 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                             children: [
                               const Text('All Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 16),
-                              Expanded(
+                              Expanded( // Use FutureBuilder here as well for the full list
                                 child: ListView.separated(
-                                  itemCount: dataStore.transactions.length,
+                                  itemCount: _dataStore.transactions.length, // This still uses local for now
                                   separatorBuilder: (_, __) => const Divider(),
                                   itemBuilder: (context, index) {
-                                    final tx = dataStore.transactions[index];
+                                    final tx = _dataStore.transactions[index];
                                     return ListTile(
                                       contentPadding: EdgeInsets.zero,
                                       title: Text(tx.label, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -356,64 +396,64 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
 
             // Transactions list
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: dataStore.transactions.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final tx = dataStore.transactions[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Row(
-                      children: [
-                        // Transaction icon
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.local_shipping_outlined,
-                            color: Color(0xFFD97706),
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              child: FutureBuilder<List<Transaction>>(
+                future: _transactionsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No transactions yet.'));
+                  }
+
+                  final transactions = snapshot.data!;
+                  return ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: transactions.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final tx = transactions[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Row(
                           children: [
-                            Text(
-                              tx.label,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF111827),
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: tx.amount < 0 ? const Color(0xFFFEF3C7) : const Color(0xFFD1FAE5),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                tx.amount < 0 ? Icons.local_shipping_outlined : Icons.account_balance_wallet_outlined,
+                                color: tx.amount < 0 ? const Color(0xFFD97706) : const Color(0xFF065F46),
+                                size: 20,
                               ),
                             ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(tx.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                Text(tx.date, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                              ],
+                            ),
+                            const Spacer(),
                             Text(
-                              tx.date,
+                              '${tx.amount < 0 ? '-' : '+'}₱${tx.amount.abs().toStringAsFixed(0)}',
                               style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade500,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: tx.amount < 0 ? const Color(0xFFDC2626) : const Color(0xFF10B981),
                               ),
                             ),
                           ],
                         ),
-                        const Spacer(),
-                        Text(
-                          '₱${tx.amount.abs().toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: tx.amount < 0
-                                ? const Color(0xFFDC2626)
-                                : const Color(0xFF10B981),
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               ),

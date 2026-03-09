@@ -4,6 +4,9 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import '../models/truck.dart';
 import '../widgets/truck_card.dart';
 import 'trip_details_screen.dart';
@@ -19,47 +22,48 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedLocation = 'Libertad Market';
   String _selectedVehicleType = 'All';
-  String _sortBy = 'Rating'; // Options: Rating, Price
+  String _sortBy = 'Rating';
+
+  late Future<List<Truck>> _trucksFuture;
+  final String _apiBaseUrl = 'http://ov3.238.mytemp.website/pasabaybcd/api/trucks.php';
+
+  @override
+  void initState() {
+    super.initState();
+    _trucksFuture = _fetchTrucks();
+    _searchController.addListener(_onSearchChanged);
+  }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
   }
 
-  // Filtered list based on selected location
-  List<Truck> get _filteredTrucks {
-    List<Truck> list = List.from(sampleTrucks);
+  void _onSearchChanged() {
+    setState(() {
+      _trucksFuture = _fetchTrucks();
+    });
+  }
 
-    // 1. Filter by Location (Origin)
-    // Match the first word of selected location (e.g. "Libertad") to the route
-    final locationKeyword = _selectedLocation.split(' ')[0].toLowerCase();
-    list = list
-        .where((t) => t.route.toLowerCase().contains(locationKeyword))
-        .toList();
+  Future<List<Truck>> _fetchTrucks() async {
+    final params = {
+      'location': _selectedLocation,
+      'vehicle_type': _selectedVehicleType,
+      'sort_by': _sortBy,
+      'q': _searchController.text,
+    };
 
-    // Apply Search Query
-    if (_searchController.text.isNotEmpty) {
-      final query = _searchController.text.toLowerCase();
-      list = list.where((t) =>
-          t.route.toLowerCase().contains(query) ||
-          t.driverName.toLowerCase().contains(query)).toList();
-    }
+    final uri = Uri.parse(_apiBaseUrl).replace(queryParameters: params);
+    final response = await http.get(uri);
 
-    // 3. Filter by Vehicle Type
-    if (_selectedVehicleType != 'All') {
-      list = list.where((t) => t.type == _selectedVehicleType).toList();
-    }
-
-    // 4. Sort
-    if (_sortBy == 'Price') {
-      list.sort((a, b) => a.price.compareTo(b.price));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Truck.fromJson(json)).toList();
     } else {
-      // Default: Rating (High to Low)
-      list.sort((a, b) => b.rating.compareTo(a.rating));
+      throw Exception('Failed to load trucks. Status code: ${response.statusCode}');
     }
-
-    return list;
   }
 
   void _showLocationPicker() {
@@ -80,8 +84,11 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
             title: Text(loc),
             trailing: _selectedLocation == loc ? const Icon(Icons.check_circle, color: Color(0xFF1A56DB)) : null,
             onTap: () {
-              setState(() => _selectedLocation = loc);
               Navigator.pop(ctx);
+              setState(() {
+                _selectedLocation = loc;
+                _trucksFuture = _fetchTrucks();
+              });
             },
           )),
           const SizedBox(height: 20),
@@ -119,8 +126,10 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                       selectedColor: const Color(0xFF1A56DB),
                       labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
                       onSelected: (selected) {
-                        setState(() => _selectedVehicleType = type);
-                        setModalState(() {});
+                        setModalState(() {
+                           _selectedVehicleType = type;
+                        });
+                        
                       },
                     );
                   }).toList(),
@@ -135,8 +144,9 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                   activeColor: const Color(0xFF1A56DB),
                   contentPadding: EdgeInsets.zero,
                   onChanged: (val) {
-                    setState(() => _sortBy = val.toString());
-                    setModalState(() {});
+                    setModalState(() {
+                      _sortBy = val.toString();
+                    });
                   },
                 ),
                 RadioListTile(
@@ -146,8 +156,9 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                   activeColor: const Color(0xFF1A56DB),
                   contentPadding: EdgeInsets.zero,
                   onChanged: (val) {
-                    setState(() => _sortBy = val.toString());
-                    setModalState(() {});
+                    setModalState(() {
+                      _sortBy = val.toString();
+                    });
                   },
                 ),
                 const SizedBox(height: 16),
@@ -155,7 +166,10 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      setState(() => _trucksFuture = _fetchTrucks());
+                    },
                     child: const Text('APPLY FILTERS'),
                   ),
                 ),
@@ -264,7 +278,6 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                     ),
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (value) => setState(() {}),
                       decoration: InputDecoration(
                         hintText: 'Where is cargo going?',
                         hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
@@ -331,43 +344,47 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
 
             // Truck list - scrollable
             Expanded(
-              child: _filteredTrucks.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.local_shipping_outlined,
-                              size: 60, color: Colors.grey.shade300),
-                          const SizedBox(height: 12),
-                          Text(
-                            'No trucks available\nfor this route.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: Colors.grey.shade500, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      itemCount: _filteredTrucks.length,
-                      itemBuilder: (context, index) {
-                        final truck = _filteredTrucks[index];
-                        return TruckCard(
-                          truck: truck,
-                          onTap: () {
-                            // Navigate to trip details for this truck
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    TripDetailsScreen(truck: truck),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+              child: FutureBuilder<List<Truck>>(
+                future: _trucksFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text('Failed to load trucks: ${snapshot.error}', textAlign: TextAlign.center),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(
+                        child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.local_shipping_outlined, size: 60, color: Colors.grey.shade300),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No trucks available\nfor this route.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                        ),
+                      ],
+                    ));
+                  }
+
+                  final trucks = snapshot.data!;
+                  return ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    itemCount: trucks.length,
+                    itemBuilder: (context, index) {
+                      final truck = trucks[index];
+                      return TruckCard(
+                        truck: truck,
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => TripDetailsScreen(truck: truck)));
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

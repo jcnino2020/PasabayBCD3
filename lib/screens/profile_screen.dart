@@ -4,7 +4,6 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
-import '../widgets/bottom_nav_bar.dart';
 import '../models/booking.dart'; // Import for DataStore
 import 'login_screen.dart';
 import 'kyc_screen.dart';

@@ -29,6 +29,23 @@ class Truck {
     required this.capacityCbm,
     this.isVaccinated = false,
   });
+
+  // Factory constructor to create a Truck from a JSON object
+  factory Truck.fromJson(Map<String, dynamic> json) {
+    return Truck(
+      id: json['id'].toString(),
+      type: json['type'] ?? 'N/A',
+      driverName: json['driverName'] ?? 'Unknown Driver',
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      plateNumber: json['plateNumber'] ?? 'N/A',
+      route: json['route'] ?? 'No route',
+      departTime: json['departTime'] ?? 'N/A',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      capacityKg: (json['capacityKg'] as num?)?.toDouble() ?? 0.0,
+      capacityCbm: (json['capacityCbm'] as num?)?.toDouble() ?? 0.0,
+      isVaccinated: json['isVaccinated'] as bool? ?? false,
+    );
+  }
 }
 
 // Sample data matching the wireframe
