@@ -31,7 +31,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
   final MapController _mapController = MapController();
   final Location _locationService = Location();
 
-  List<Marker> _markers = [];
+  final List<Marker> _markers = [];
   List<LatLng> _polylineCoordinates = [];
   LatLng? _truckPosition;
   double _truckRotation = 0.0;
@@ -547,10 +547,10 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
   Widget _buildOpenStreetMap() {
     return FlutterMap(
       mapController: _mapController,
-      options: MapOptions(
-        initialCenter: const LatLng(10.6675, 122.9461), // Bacolod City center
+      options: const MapOptions(
+        initialCenter: LatLng(10.6675, 122.9461), // Bacolod City center
         initialZoom: 14,
-        interactionOptions: const InteractionOptions(
+        interactionOptions: InteractionOptions(
           flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
         ),
       ),

@@ -399,12 +399,12 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
             ),
             child: TextField(
               controller: _searchController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search by destination or driver...',
                 hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
                 prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
