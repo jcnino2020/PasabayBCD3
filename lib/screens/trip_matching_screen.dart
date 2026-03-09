@@ -5,11 +5,23 @@
 
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import '../models/booking.dart';
+import 'package:location/location.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/truck.dart';
 import '../widgets/truck_card.dart';
 import 'trip_details_screen.dart';
+
+// Simple model to hold weather data
+class WeatherInfo {
+  final double temperature;
+  final String description;
+  final IconData icon;
+
+  WeatherInfo(
+      {required this.temperature, required this.description, required this.icon});
+}
 
 class TripMatchingScreen extends StatefulWidget {
   const TripMatchingScreen({super.key});
@@ -24,13 +36,16 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
   String _selectedVehicleType = 'All';
   String _sortBy = 'Rating';
 
+  final Location _locationService = Location();
   late Future<List<Truck>> _trucksFuture;
+  late Future<WeatherInfo> _weatherFuture;
   final String _apiBaseUrl = 'http://ov3.238.mytemp.website/pasabaybcd/api/trucks.php';
 
   @override
   void initState() {
     super.initState();
     _trucksFuture = _fetchTrucks();
+    _weatherFuture = _fetchWeather();
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -64,6 +79,77 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
     } else {
       throw Exception('Failed to load trucks. Status code: ${response.statusCode}');
     }
+  }
+
+  Future<WeatherInfo> _fetchWeather() async {
+    try {
+      // Get user location
+      final locationData = await _locationService.getLocation();
+      final lat = locationData.latitude;
+      final lon = locationData.longitude;
+
+      if (lat == null || lon == null) {
+        throw Exception('Location data not available.');
+      }
+
+      // Call Open-Meteo API (free, no API key needed)
+      final url =
+          'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current_weather=true';
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final currentWeather = data['current_weather'];
+        final temp = currentWeather['temperature'] as num;
+        final weatherCode = currentWeather['weathercode'] as int;
+
+        return _mapWeatherCodeToInfo(weatherCode, temp.toDouble());
+      } else {
+        throw Exception('Failed to load weather data.');
+      }
+    } catch (e) {
+      debugPrint("Weather fetch error: $e");
+      // Return a default/error state
+      return WeatherInfo(
+          temperature: 0, description: 'N/A', icon: Icons.error_outline);
+    }
+  }
+
+  // Maps WMO weather codes from the API to a description and icon
+  WeatherInfo _mapWeatherCodeToInfo(int code, double temp) {
+    String description;
+    IconData icon;
+    switch (code) {
+      case 0:
+        description = 'Clear Sky';
+        icon = Icons.wb_sunny_outlined;
+        break;
+      case 1:
+      case 2:
+      case 3:
+        description = 'Cloudy';
+        icon = Icons.cloud_outlined;
+        break;
+      case 61:
+      case 63:
+      case 65:
+      case 80:
+      case 81:
+      case 82:
+        description = 'Rainy';
+        icon = Icons.grain;
+        break;
+      case 95:
+      case 96:
+      case 99:
+        description = 'Thunderstorm';
+        icon = Icons.thunderstorm_outlined;
+        break;
+      default:
+        description = 'Cloudy';
+        icon = Icons.cloud_outlined;
+    }
+    return WeatherInfo(temperature: temp, description: description, icon: icon);
   }
 
   Future<void> _refreshTrucks() async {
@@ -227,78 +313,240 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
     );
   }
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning';
+    }
+    if (hour < 17) {
+      return 'Good Afternoon';
+    }
+    return 'Good Evening';
+  }
+
+  Widget _buildHeader(DataStore dataStore) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Greeting and Notifications
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getGreeting(),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                  ),
+                  Text(
+                    dataStore.merchantName,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined, color: Colors.grey),
+                onPressed: _showNotifications,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Dashboard Cards
+          SizedBox(
+            height: 90,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildWeatherCard(),
+                const SizedBox(width: 12),
+                _buildWalletCard(dataStore),
+                const SizedBox(width: 12),
+                _buildActiveTripCard(dataStore),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Search Bar
+          Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by destination or driver...',
+                hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
+                prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeatherCard() {
+    return FutureBuilder<WeatherInfo>(
+        future: _weatherFuture,
+        builder: (context, snapshot) {
+          // Loading state
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Container(
+              width: 140,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Center(
+                  child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))),
+            );
+          }
+
+          // Error or no data state
+          if (!snapshot.hasData || snapshot.hasError) {
+            return Container(
+              width: 140,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Center(child: Icon(Icons.error_outline, color: Colors.grey)),
+            );
+          }
+
+          // Success state
+          final weather = snapshot.data!;
+          return Container(
+            width: 140,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFBEB),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                Icon(weather.icon, color: const Color(0xFFF59E0B), size: 32),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('${weather.temperature.toStringAsFixed(0)}°C', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(weather.description, style: TextStyle(color: Colors.grey.shade600, fontSize: 12), overflow: TextOverflow.ellipsis),
+                  ],
+                )
+              ],
+            ),
+          );
+        });
+  }
+
+  Widget _buildWalletCard(DataStore dataStore) {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEBF2FF),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            'BALANCE',
+            style: TextStyle(fontSize: 10, color: Color(0xFF1A56DB), fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '₱${dataStore.balance.toStringAsFixed(0)}',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1A56DB),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActiveTripCard(DataStore dataStore) {
+    bool hasActiveTrip = dataStore.activeBooking != null;
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: hasActiveTrip ? const Color(0xFFECFDF5) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            hasActiveTrip ? Icons.local_shipping : Icons.watch_later_outlined,
+            color: hasActiveTrip ? const Color(0xFF065F46) : Colors.grey.shade500,
+            size: 24,
+          ),
+          const Spacer(),
+          Text(
+            hasActiveTrip ? '1 Active Trip' : 'No Active Trips',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: hasActiveTrip ? const Color(0xFF065F46) : Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final dataStore = DataStore();
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFF),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header section with location + notification bell
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Location pin + name + notification icon
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: _showLocationPicker,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on,
-                                color: Color(0xFF1A56DB), size: 18),
-                            const SizedBox(width: 4),
-                            Text(
-                              _selectedLocation,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF111827),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.keyboard_arrow_down,
-                                color: Colors.grey, size: 18),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined,
-                            color: Colors.grey),
-                        onPressed: _showNotifications,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Search bar
-                  Container(
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Where is cargo going?',
-                        hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
-                        prefixIcon: Icon(Icons.search,
-                            color: Colors.grey, size: 20),
-                        border: InputBorder.none,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // New redesigned header
+            _buildHeader(dataStore),
 
             // Section header with filter button
             Padding(
@@ -306,13 +554,31 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'AVAILABLE TRUCKS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey,
-                      letterSpacing: 1.2,
+                  GestureDetector(
+                    onTap: _showLocationPicker,
+                    child: Row(
+                      children: [
+                        const Text(
+                          'TRUCKS FROM',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _selectedLocation.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A56DB),
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const Icon(Icons.keyboard_arrow_down, color: Colors.grey, size: 16),
+                      ],
                     ),
                   ),
                   GestureDetector(
