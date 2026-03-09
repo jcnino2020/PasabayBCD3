@@ -66,6 +66,13 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
     }
   }
 
+  Future<void> _refreshTrucks() async {
+    setState(() {
+      _trucksFuture = _fetchTrucks();
+    });
+    await _trucksFuture;
+  }
+
   void _showLocationPicker() {
     final locations = ['Libertad Market', 'Burgos Market', 'Central Market'];
     showModalBottomSheet(
@@ -344,46 +351,79 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
 
             // Truck list - scrollable
             Expanded(
-              child: FutureBuilder<List<Truck>>(
-                future: _trucksFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Failed to load trucks: ${snapshot.error}', textAlign: TextAlign.center),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(
-                        child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.local_shipping_outlined, size: 60, color: Colors.grey.shade300),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No trucks available\nfor this route.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                        ),
-                      ],
-                    ));
-                  }
+              child: RefreshIndicator(
+                onRefresh: _refreshTrucks,
+                child: FutureBuilder<List<Truck>>(
+                  future: _trucksFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      // Also wrap the error state in a scrollable view to allow pull-to-refresh
+                      return LayoutBuilder(builder: (ctx, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                                    const SizedBox(height: 16),
+                                    Text('Failed to load trucks: ${snapshot.error}', textAlign: TextAlign.center),
+                                    const SizedBox(height: 16),
+                                    const Text('Pull down to try again.', style: TextStyle(color: Colors.grey)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      });
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      // Wrap empty state in a scrollable view to allow pull-to-refresh
+                      return LayoutBuilder(builder: (ctx, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                            child: Center(
+                                child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.local_shipping_outlined, size: 60, color: Colors.grey.shade300),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'No trucks available\nfor this route.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                                ),
+                              ],
+                            )),
+                          ),
+                        );
+                      });
+                    }
 
-                  final trucks = snapshot.data!;
-                  return ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    itemCount: trucks.length,
-                    itemBuilder: (context, index) {
-                      final truck = trucks[index];
-                      return TruckCard(
-                        truck: truck,
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => TripDetailsScreen(truck: truck)));
-                        },
-                      );
-                    },
-                  );
-                },
+                    final trucks = snapshot.data!;
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      itemCount: trucks.length,
+                      itemBuilder: (context, index) {
+                        final truck = trucks[index];
+                        return TruckCard(
+                          truck: truck,
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (_) => TripDetailsScreen(truck: truck)));
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ],

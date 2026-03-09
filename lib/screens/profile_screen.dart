@@ -4,6 +4,7 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/booking.dart'; // Import for DataStore
 import 'login_screen.dart';
 import 'kyc_screen.dart';
@@ -423,7 +424,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: const Text('Cancel'),
                                 ),
                                 ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async {
+                                    // Clear the saved user session
+                                    final prefs = await SharedPreferences.getInstance();
+                                    await prefs.remove('userId');
+
+                                    // Reset local data store
+                                    DataStore().userId = null;
+
+                                    if (!context.mounted) return;
+
                                     Navigator.pushAndRemoveUntil(
                                       context,
                                       MaterialPageRoute(

@@ -4,6 +4,12 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import '../models/booking.dart';
+import 'main_screen.dart';
 import 'onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -31,15 +37,47 @@ class _SplashScreenState extends State<SplashScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
     _controller.forward();
 
-    // Navigate to onboarding after 2.5 seconds
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-        );
+    // Check for a saved session instead of just waiting
+    _checkSession();
+  }
+
+  void _checkSession() async {
+    // Wait for splash animation to be visible for a bit
+    await Future.delayed(const Duration(milliseconds: 2000));
+
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('userId');
+
+    if (userId != null) {
+      // User session found, try to fetch user data to restore state
+      try {
+        final uri = Uri.parse('http://ov3.238.mytemp.website/pasabaybcd/api/get_user.php')
+            .replace(queryParameters: {'user_id': userId.toString()});
+        
+        final response = await http.get(uri);
+
+        if (mounted && response.statusCode == 200) {
+          final userData = json.decode(response.body);
+          DataStore().setUserData(userData);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MainScreen()),
+          );
+          return; // Exit function on success
+        }
+      } catch (e) {
+        // If fetching fails for any reason (e.g. no internet), proceed to login.
+        debugPrint("Failed to restore session: $e");
       }
-    });
+    }
+
+    // If no session is found or restoring it fails, go to onboarding
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+    }
   }
 
   @override

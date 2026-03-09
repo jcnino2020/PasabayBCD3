@@ -1,21 +1,24 @@
 // ============================================================
 // Screen 08: Live Tracking Screen (Core)
-// Shows a simulated map with driver route and ETA
+// Shows a real OpenStreetMaps map with driver route and ETA
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:location/location.dart';
+import 'dart:async';
+import 'dart:math';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import '../models/truck.dart';
 import '../models/booking.dart';
 import 'main_screen.dart';
 
 class LiveTrackingScreen extends StatefulWidget {
-  final Truck? truck;
-  final Booking? booking;
-
   const LiveTrackingScreen({
     super.key,
-    this.truck,
-    this.booking,
   });
 
   @override
@@ -24,34 +27,197 @@ class LiveTrackingScreen extends StatefulWidget {
 
 class _LiveTrackingScreenState extends State<LiveTrackingScreen>
     with TickerProviderStateMixin {
+  // --- Map and Location State ---
+  final MapController _mapController = MapController();
+  final Location _locationService = Location();
+
+  List<Marker> _markers = [];
+  List<LatLng> _polylineCoordinates = [];
+  LatLng? _truckPosition;
+  double _truckRotation = 0.0;
+
+  // --- Animation State ---
   late AnimationController _truckAnimController;
-  late Animation<double> _truckPositionAnim;
-  double _etaMinutes = 8;
+
+  // --- UI State ---
+  double _initialEtaMinutes = 0;
+  double _currentEtaMinutes = 0;
+  bool _hasArrived = false;
 
   @override
   void initState() {
     super.initState();
-    // Animate the truck icon moving along the dotted route
     _truckAnimController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat(reverse: true);
+      duration: const Duration(seconds: 30),
+    )..addListener(() {
+        _updateTruckAndEta();
+      })..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          // When animation finishes, update the UI to show arrival
+          setState(() {
+            _hasArrived = true;
+          });
+        }
+      });
 
-    _truckPositionAnim = Tween<double>(begin: 0.0, end: 0.4).animate(
-      CurvedAnimation(parent: _truckAnimController, curve: Curves.easeInOut),
-    );
-
-    // Simulate reducing ETA over time
-    _simulateEtaCountdown();
+    _setupMapAndIcons();
   }
 
-  void _simulateEtaCountdown() async {
-    while (mounted && _etaMinutes > 0) {
-      await Future.delayed(const Duration(seconds: 5));
-      if (mounted) {
-        setState(() => _etaMinutes = (_etaMinutes - 0.5).clamp(0, 60));
+  Future<void> _fetchRoute(LatLng start, LatLng end) async {
+    // OSRM API endpoint for driving routes
+    final url =
+        'https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // Extract the coordinates from the GeoJSON response
+        final coordinates = data['routes'][0]['geometry']['coordinates'] as List;
+        // Extract the duration from the response (in seconds)
+        final durationInSeconds = data['routes'][0]['duration'] as num;
+        final durationInMinutes = durationInSeconds / 60.0;
+
+        // OSRM returns [longitude, latitude], so we need to map it to LatLng(latitude, longitude)
+        final points = coordinates.map((c) => LatLng(c[1], c[0])).toList();
+        setState(() {
+          _polylineCoordinates = points;
+          _initialEtaMinutes = durationInMinutes;
+          _currentEtaMinutes = durationInMinutes;
+        });
+      } else {
+        debugPrint('Failed to fetch route: ${response.statusCode}');
+        // Fallback to a straight line if the API fails
+        setState(() => _polylineCoordinates = [start, end]);
       }
+    } catch (e) {
+      debugPrint('Error fetching route: $e');
+      setState(() => _polylineCoordinates = [start, end]);
     }
+  }
+
+  LatLng _getStartPositionForRoute(String route) {
+    final routeLowerCase = route.toLowerCase();
+    if (routeLowerCase.contains('burgos')) {
+      return const LatLng(10.6765, 122.9534); // Burgos Public Market
+    } else if (routeLowerCase.contains('central market')) {
+      return const LatLng(10.6633, 122.9503); // Bacolod Public Plaza / Central Market
+    }
+    // Default to Libertad Market
+    return const LatLng(10.6675, 122.9461); // Libertad Market
+  }
+
+  void _setupMapAndIcons() async {
+    final activeBooking = DataStore().activeBooking;
+    if (activeBooking == null) return;
+
+    // Find the truck associated with the active booking
+    final activeTruck = sampleTrucks.firstWhere(
+        (t) => t.id == activeBooking.truckId,
+        orElse: () => sampleTrucks[0]);
+
+    // Get start position based on the truck's route
+    final LatLng startPosition = _getStartPositionForRoute(activeTruck.route);
+
+    // Get user's current location as the destination
+    try {
+      final locationData = await _locationService.getLocation();
+      final destinationPosition =
+          LatLng(locationData.latitude!, locationData.longitude!);
+
+      // Fetch the road-based route before setting state
+      await _fetchRoute(startPosition, destinationPosition);
+
+      setState(() {
+        _truckPosition = startPosition;
+        _markers.add(Marker(
+          point: destinationPosition,
+          width: 80,
+          height: 80,
+          child: Image.asset('assets/destination_pin.png'),
+        ));
+      });
+
+      _animateCameraToRoute();
+      // Start the animation with its fixed duration
+      _truckAnimController.forward();
+    } catch (e) {
+      debugPrint("Could not get location: $e");
+      // Handle location permission errors, etc.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not get your location. Please enable location services.')),
+      );
+    }
+  }
+
+  void _animateCameraToRoute() async {
+    if (_polylineCoordinates.isEmpty) return;
+    var bounds = LatLngBounds.fromPoints(_polylineCoordinates);
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 120),
+      ),
+    );
+  }
+
+  void _updateTruckAndEta() {
+    if (_polylineCoordinates.length < 2) return;
+
+    final animationValue = _truckAnimController.value;
+
+    // Calculate which segment of the multi-point polyline we are on
+    final double totalSegments = (_polylineCoordinates.length - 1).toDouble();
+    final double currentSegmentPos = totalSegments * animationValue;
+    final int currentSegmentIndex = currentSegmentPos.floor();
+
+    // Ensure we don't go out of bounds at the end of the animation
+    if (currentSegmentIndex >= _polylineCoordinates.length - 1) {
+      if (_truckPosition != _polylineCoordinates.last) {
+        setState(() => _truckPosition = _polylineCoordinates.last);
+      }
+      return;
+    }
+
+    // Calculate how far along the current segment we are (0.0 to 1.0)
+    final double segmentProgress = currentSegmentPos - currentSegmentIndex;
+
+    final LatLng segmentStart = _polylineCoordinates[currentSegmentIndex];
+    final LatLng segmentEnd = _polylineCoordinates[currentSegmentIndex + 1];
+
+    // Interpolate between the start and end points of the current segment
+    final lat = segmentStart.latitude + (segmentEnd.latitude - segmentStart.latitude) * segmentProgress;
+    final lng = segmentStart.longitude + (segmentEnd.longitude - segmentStart.longitude) * segmentProgress;
+    final newPosition = LatLng(lat, lng);
+
+    double bearing = _calculateBearing(_truckPosition ?? segmentStart, newPosition);
+
+    setState(() {
+      _truckPosition = newPosition;
+      // Only update rotation if it changes significantly to avoid jitter
+      if ((bearing - _truckRotation).abs() > 1.0) {
+        _truckRotation = bearing;
+      }
+
+      // Update ETA based on animation progress
+      _currentEtaMinutes = _initialEtaMinutes * (1.0 - animationValue);
+    });
+  }
+
+  double _calculateBearing(LatLng begin, LatLng end) {
+    double lat1 = begin.latitude * pi / 180;
+    double lon1 = begin.longitude * pi / 180;
+    double lat2 = end.latitude * pi / 180;
+    double lon2 = end.longitude * pi / 180;
+
+    double dLon = lon2 - lon1;
+
+    double y = sin(dLon) * cos(lat2);
+    double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon);
+
+    double bearing = atan2(y, x);
+    return (bearing * 180 / pi + 360) % 360;
   }
 
   @override
@@ -63,7 +229,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
   @override
   Widget build(BuildContext context) {
     // Resolve booking from args or DataStore
-    final activeBooking = widget.booking ?? DataStore().activeBooking;
+    final activeBooking = DataStore().activeBooking;
     
     // If no active booking, show empty state
     if (activeBooking == null) {
@@ -83,16 +249,63 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
     }
 
     // Resolve truck
-    final activeTruck = widget.truck ?? 
-        sampleTrucks.firstWhere((t) => t.id == activeBooking.truckId, orElse: () => sampleTrucks[0]);
+    final activeTruck = sampleTrucks.firstWhere(
+        (t) => t.id == activeBooking.truckId,
+        orElse: () => sampleTrucks[0]);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFF),
       body: Stack(
-        // Stack lets us overlay the bottom card on top of the "map"
         children: [
-          // Simulated map background
-          _buildSimulatedMap(),
+          // Real OpenStreetMap, renamed for clarity
+          _buildOpenStreetMap(),
+
+          // Map controls (Zoom and Recenter)
+          Positioned(
+            bottom: 350, // Position above the bottom sheet
+            right: 16,
+            child: Column(
+              children: [
+                // Zoom In
+                FloatingActionButton.small(
+                  heroTag: 'zoomInBtn',
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF111827),
+                  onPressed: () {
+                    final currentZoom = _mapController.camera.zoom;
+                    _mapController.move(_mapController.camera.center, currentZoom + 1);
+                  },
+                  child: const Icon(Icons.add),
+                ),
+                const SizedBox(height: 8),
+                // Zoom Out
+                FloatingActionButton.small(
+                  heroTag: 'zoomOutBtn',
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF111827),
+                  onPressed: () {
+                    final currentZoom = _mapController.camera.zoom;
+                    _mapController.move(_mapController.camera.center, currentZoom - 1);
+                  },
+                  child: const Icon(Icons.remove),
+                ),
+                const SizedBox(height: 16),
+                // Recenter on Truck
+                FloatingActionButton(
+                  heroTag: 'recenterBtn',
+                  backgroundColor: const Color(0xFF1A56DB),
+                  foregroundColor: Colors.white,
+                  onPressed: () {
+                    if (_truckPosition != null) {
+                      // Animate the camera to the truck's position with a good zoom level
+                      _mapController.move(_truckPosition!, 16.0);
+                    }
+                  },
+                  child: const Icon(Icons.gps_fixed),
+                ),
+              ],
+            ),
+          ),
 
           // Status badge at top
           SafeArea(
@@ -200,11 +413,14 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                   // ETA row
                   Row(
                     children: [
-                      const Icon(Icons.schedule,
-                          color: Color(0xFF1A56DB), size: 18),
+                      Icon(
+                        _hasArrived ? Icons.check_circle : Icons.schedule,
+                        color: _hasArrived ? const Color(0xFF10B981) : const Color(0xFF1A56DB),
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Text(
-                        'Arriving in ${_etaMinutes.toStringAsFixed(0)} mins',
+                        _hasArrived ? 'The truck has arrived' : 'Arriving in ${_currentEtaMinutes.ceil()} mins',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -328,160 +544,46 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
     );
   }
 
-  // Simulated map with dotted route and animated truck icon
-  Widget _buildSimulatedMap() {
-    return Container(
-      height: MediaQuery.of(context).size.height,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFE8F0FE),
-            Color(0xFFD1E3FF),
-          ],
+  Widget _buildOpenStreetMap() {
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: const LatLng(10.6675, 122.9461), // Bacolod City center
+        initialZoom: 14,
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
         ),
       ),
-      child: Stack(
-        children: [
-          // Road/grid simulation
-          CustomPaint(
-            size: Size(
-              MediaQuery.of(context).size.width,
-              MediaQuery.of(context).size.height,
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.example.pasabaybcd',
+        ),
+        PolylineLayer(
+          polylines: [
+            Polyline(
+              points: _polylineCoordinates,
+              strokeWidth: 5.0,
+              color: const Color(0xFF1A56DB),
             ),
-            painter: _MapPainter(),
-          ),
-
-          // Animated truck icon on the dotted route
-          AnimatedBuilder(
-            animation: _truckPositionAnim,
-            builder: (context, child) {
-              final screenWidth = MediaQuery.of(context).size.width;
-              final screenHeight = MediaQuery.of(context).size.height;
-              // Move from bottom-right to upper-left
-              final x = screenWidth * 0.6 -
-                  (screenWidth * 0.3 * _truckPositionAnim.value);
-              final y = screenHeight * 0.7 -
-                  (screenHeight * 0.45 * _truckPositionAnim.value);
-              return Positioned(
-                left: x - 20,
-                top: y - 20,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A56DB),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1A56DB).withOpacity(0.3),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.local_shipping,
-                      color: Colors.white, size: 20),
-                ),
-              );
-            },
-          ),
-
-          // ETA chip on map
-          Positioned(
-            left: MediaQuery.of(context).size.width * 0.5,
-            top: MediaQuery.of(context).size.height * 0.3,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF111827),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '${_etaMinutes.toStringAsFixed(0)} mins away',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+          ],
+        ),
+        MarkerLayer(
+          markers: [
+            ..._markers,
+            if (_truckPosition != null)
+              Marker(
+                point: _truckPosition!,
+                width: 80,
+                height: 80,
+                child: Transform.rotate(
+                  angle: _truckRotation * (pi / 180),
+                  child: Image.asset('assets/truck_icon.png'),
                 ),
               ),
-            ),
-          ),
-
-          // Destination pin
-          Positioned(
-            left: MediaQuery.of(context).size.width * 0.25,
-            top: MediaQuery.of(context).size.height * 0.15,
-            child: const Icon(Icons.location_on,
-                color: Color(0xFF10B981), size: 32),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
-}
-
-// Custom painter for the map background (roads and dotted route)
-class _MapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final roadPaint = Paint()
-      ..color = Colors.white.withOpacity(0.5)
-      ..strokeWidth = 6
-      ..style = PaintingStyle.stroke;
-
-
-    // Draw a few road lines to simulate a street map
-    canvas.drawLine(
-      Offset(size.width * 0.3, 0),
-      Offset(size.width * 0.3, size.height),
-      roadPaint,
-    );
-    canvas.drawLine(
-      Offset(0, size.height * 0.4),
-      Offset(size.width, size.height * 0.4),
-      roadPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.7, 0),
-      Offset(size.width * 0.7, size.height),
-      roadPaint,
-    );
-
-    // Draw dotted route line from bottom-right to top-left
-    final path = Path()
-      ..moveTo(size.width * 0.65, size.height * 0.75)
-      ..quadraticBezierTo(
-        size.width * 0.45,
-        size.height * 0.5,
-        size.width * 0.25,
-        size.height * 0.15,
-      );
-
-    // Draw dashes along the path
-    final dashPaint = Paint()
-      ..color = const Color(0xFF1A56DB).withOpacity(0.7)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    const dashLength = 10.0;
-    const gapLength = 8.0;
-    final pathMetric = path.computeMetrics().first;
-    double distance = 0;
-    while (distance < pathMetric.length) {
-      final start = pathMetric.getTangentForOffset(distance)?.position;
-      final end = pathMetric
-          .getTangentForOffset(distance + dashLength)
-          ?.position;
-      if (start != null && end != null) {
-        canvas.drawLine(start, end, dashPaint);
-      }
-      distance += dashLength + gapLength;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

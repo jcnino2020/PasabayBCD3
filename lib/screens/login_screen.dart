@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/booking.dart';
 import 'main_screen.dart';
@@ -79,6 +80,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final userData = json.decode(response.body);
         DataStore().setUserData(userData); // Update the central data store
+
+        // Save user ID to persist session
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('userId', userData['id']);
         
         Navigator.pushReplacement(
           context,
