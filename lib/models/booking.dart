@@ -84,6 +84,7 @@ class DataStore {
   // User Profile
   String merchantName = "Aling Nena's Stall";
   String marketLocation = 'Libertad Market, Aisle 8';
+  String? profilePhotoUrl;
   bool isKycVerified = false;
 
   // Wallet & Financials
@@ -98,6 +99,7 @@ class DataStore {
     userId = userData['id'] as int?;
     merchantName = userData['merchant_name'] ?? 'N/A';
     marketLocation = userData['market_location'] ?? 'N/A';
+    profilePhotoUrl = userData['profile_photo_url'] as String?;
     isKycVerified = (userData['is_kyc_verified'] == 1 || userData['is_kyc_verified'] == true);
     
     // Handle wallet_balance which may be a String or a number from JSON

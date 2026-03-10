@@ -452,7 +452,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Manong Juan is transporting your shipment.',
+                      '${activeTruck.driverName} is transporting your shipment.',
                       style: TextStyle(
                           fontSize: 12, color: Colors.grey.shade500),
                     ),
@@ -465,33 +465,20 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Cargo Photo
-                      if (activeBooking.cargoPhotoUrl != null)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            // Append a timestamp to the URL to bypass the cache.
-                            // This forces the app to always fetch the latest image from the server.
-                            '${activeBooking.cargoPhotoUrl!}?v=${DateTime.now().millisecondsSinceEpoch}',
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                            // Show a placeholder while loading
-                            loadingBuilder: (context, child, progress) {
-                              return progress == null ? child : Container(color: Colors.grey.shade200, width: 50, height: 50, child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))));
-                            },
-                            // Show an icon if the image fails to load
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(color: Colors.grey.shade200, width: 50, height: 50, child: const Icon(Icons.error_outline, color: Colors.grey));
-                            },
-                          ),
-                        ),
-                      if (activeBooking.cargoPhotoUrl == null)
-                        CircleAvatar(
-                          radius: 25,
-                          backgroundColor: Colors.grey.shade200,
-                          child: const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 24),
-                        ),
+                      // --- Driver's Profile Photo ---
+                      CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Colors.grey.shade200,
+                        // Use a cache-busting URL for the driver's photo
+                        backgroundImage: activeTruck.profilePhotoUrl != null
+                            ? NetworkImage(
+                                '${activeTruck.profilePhotoUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
+                            : null,
+                        child: activeTruck.profilePhotoUrl == null
+                            ? const Icon(Icons.person,
+                                color: Colors.grey, size: 28)
+                            : null,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

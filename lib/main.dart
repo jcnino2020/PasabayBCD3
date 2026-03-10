@@ -1,32 +1,3 @@
-// ============================================================
-// main.dart - PasabayBCD Entry Point
-// SME Logistics Hub for Bacolod City small market vendors
-//
-// Project structure:
-//   lib/
-//     main.dart               <- You are here
-//     screens/
-//       splash_screen.dart    <- Screen 01
-//       onboarding_screen.dart  <- Screen 02
-//       login_screen.dart       <- Screen 03
-//       trip_matching_screen.dart <- Screen 04 (Core)
-//       trip_details_screen.dart  <- Screen 05
-//       cargo_form_screen.dart    <- Screen 06 (Core)
-//       driver_confirmation_screen.dart <- Screen 07
-//       live_tracking_screen.dart  <- Screen 08 (Core)
-//       savings_dashboard_screen.dart <- Screen 09
-//       profile_screen.dart     <- Screen 10
-//     widgets/
-//       bottom_nav_bar.dart   <- Shared nav bar
-//       truck_card.dart       <- Truck listing card
-//     models/
-//       truck.dart            <- Truck data + sample data
-//       booking.dart          <- Booking data + transactions
-//
-// State management: StatefulWidget + setState() only
-// Navigation: Navigator.push() / Navigator.pop()
-// ============================================================
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/splash_screen.dart';

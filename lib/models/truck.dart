@@ -6,15 +6,15 @@
 class Truck {
   final String id;
   final String type;        // e.g., "L300 VAN", "MULTICAB"
-  final String driverName;
-  final double rating;
+  final String driverName;  // Note: In a real app, this would come from a JOIN with a drivers/users table
+  final double rating;      // Note: This would also come from the driver/user record
   final String plateNumber;
   final String route;       // e.g., "Libertad → Mansilingan"
   final String departTime;  // e.g., "2:30 PM"
-  final double price;       // in PHP
+  final double price;       // from base_price in DB
   final double capacityKg;
   final double capacityCbm; // cubic meters
-  final bool isVaccinated;
+  final String? profilePhotoUrl;
 
   Truck({
     required this.id,
@@ -27,7 +27,7 @@ class Truck {
     required this.price,
     required this.capacityKg,
     required this.capacityCbm,
-    this.isVaccinated = false,
+    this.profilePhotoUrl,
   });
 
   // Factory constructor to create a Truck from a JSON object
@@ -35,15 +35,15 @@ class Truck {
     return Truck(
       id: json['id'].toString(),
       type: json['type'] ?? 'N/A',
-      driverName: json['driverName'] ?? 'Unknown Driver',
+      driverName: json['driver_name'] ?? 'Unknown Driver',
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      plateNumber: json['plateNumber'] ?? 'N/A',
-      route: json['route'] ?? 'No route',
-      departTime: json['departTime'] ?? 'N/A',
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      capacityKg: (json['capacityKg'] as num?)?.toDouble() ?? 0.0,
-      capacityCbm: (json['capacityCbm'] as num?)?.toDouble() ?? 0.0,
-      isVaccinated: json['isVaccinated'] as bool? ?? false,
+      plateNumber: json['plate_number'] ?? 'N/A',
+      route: json['current_route'] ?? 'No route',
+      departTime: json['depart_time'] ?? 'N/A',
+      price: (json['base_price'] as num?)?.toDouble() ?? 0.0,
+      capacityKg: (json['capacity_kg'] as num?)?.toDouble() ?? 0.0,
+      capacityCbm: (json['capacity_cbm'] as num?)?.toDouble() ?? 0.0,
+      profilePhotoUrl: json['profile_photo_url'],
     );
   }
 }
@@ -61,7 +61,8 @@ List<Truck> sampleTrucks = [
     price: 150,
     capacityKg: 200,
     capacityCbm: 1.5,
-    isVaccinated: true,
+    // Placeholder image from a free-to-use service
+    profilePhotoUrl: 'https://i.pravatar.cc/150?u=driver1',
   ),
   Truck(
     id: '2',
@@ -74,7 +75,7 @@ List<Truck> sampleTrucks = [
     price: 80,
     capacityKg: 100,
     capacityCbm: 0.8,
-    isVaccinated: false,
+    profilePhotoUrl: 'https://i.pravatar.cc/150?u=driver2',
   ),
   Truck(
     id: '3',
@@ -87,7 +88,7 @@ List<Truck> sampleTrucks = [
     price: 120,
     capacityKg: 180,
     capacityCbm: 1.2,
-    isVaccinated: true,
+    profilePhotoUrl: 'https://i.pravatar.cc/150?u=driver3',
   ),
   Truck(
     id: '4',
@@ -100,7 +101,7 @@ List<Truck> sampleTrucks = [
     price: 90,
     capacityKg: 120,
     capacityCbm: 1.0,
-    isVaccinated: true,
+    profilePhotoUrl: 'https://i.pravatar.cc/150?u=driver4',
   ),
   Truck(
     id: '5',
@@ -113,7 +114,7 @@ List<Truck> sampleTrucks = [
     price: 160,
     capacityKg: 220,
     capacityCbm: 1.6,
-    isVaccinated: true,
+    profilePhotoUrl: 'https://i.pravatar.cc/150?u=driver5',
   ),
   Truck(
     id: '6',
@@ -126,6 +127,6 @@ List<Truck> sampleTrucks = [
     price: 110,
     capacityKg: 150,
     capacityCbm: 1.1,
-    isVaccinated: false,
+    profilePhotoUrl: 'https://i.pravatar.cc/150?u=driver6',
   ),
 ];
