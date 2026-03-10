@@ -12,6 +12,7 @@ class Booking {
   final int quantity;
   final double estimatedFee;
   final String status; // pending, confirmed, in_transit, delivered
+  final String? cargoPhotoUrl;
 
   Booking({
     required this.id,
@@ -22,7 +23,23 @@ class Booking {
     required this.quantity,
     required this.estimatedFee,
     this.status = 'pending',
+    this.cargoPhotoUrl,
   });
+
+  // Factory constructor to create a Booking from a JSON object
+  factory Booking.fromJson(Map<String, dynamic> json) {
+    return Booking(
+      id: json['id'].toString(),
+      truckId: json['truck_id'].toString(),
+      driverName: json['driver_name'] ?? 'N/A',
+      cargoCategory: json['cargo_category'] ?? 'N/A',
+      weightKg: (json['cargo_weight_kg'] as num?)?.toDouble() ?? 0.0,
+      quantity: (json['cargo_quantity'] as num?)?.toInt() ?? 0,
+      estimatedFee: (json['estimated_fee'] as num?)?.toDouble() ?? 0.0,
+      status: json['status'] ?? 'pending',
+      cargoPhotoUrl: json['cargo_photo_url'],
+    );
+  }
 }
 
 // Sample past transactions for the savings dashboard

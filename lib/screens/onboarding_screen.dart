@@ -48,18 +48,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Returns the icon widget for each page
   Widget _buildPageIcon(String iconKey) {
-    IconData iconData;
+    String imagePath;
     switch (iconKey) {
       case 'box':
-        iconData = Icons.inventory_2_outlined;
+        imagePath = 'assets/images/onboarding_box.png';
         break;
       case 'map':
-        iconData = Icons.map_outlined;
+        imagePath = 'assets/images/onboarding_map.png';
         break;
       default:
-        iconData = Icons.local_shipping_outlined;
+        imagePath = 'assets/images/onboarding_truck.png';
     }
-    return Icon(iconData, size: 80, color: Colors.grey.shade300);
+    // Using Image.asset to show a more engaging illustration.
+    return Image.asset(imagePath, height: 150, fit: BoxFit.contain);
   }
 
   @override
@@ -101,7 +102,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       children: [
                         // Illustration placeholder (grey box with icon)
                         Container(
-                          width: double.infinity,
+                          width: 250,
                           height: 220,
                           decoration: BoxDecoration(
                             color: const Color(0xFFF3F7FF),

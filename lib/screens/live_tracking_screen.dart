@@ -463,32 +463,55 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
 
                   // Driver info row
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: Colors.grey.shade200,
-                        child: const Icon(Icons.person,
-                            color: Colors.grey, size: 24),
-                      ),
+                      // Cargo Photo
+                      if (activeBooking.cargoPhotoUrl != null)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            // Append a timestamp to the URL to bypass the cache.
+                            // This forces the app to always fetch the latest image from the server.
+                            '${activeBooking.cargoPhotoUrl!}?v=${DateTime.now().millisecondsSinceEpoch}',
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            // Show a placeholder while loading
+                            loadingBuilder: (context, child, progress) {
+                              return progress == null ? child : Container(color: Colors.grey.shade200, width: 50, height: 50, child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))));
+                            },
+                            // Show an icon if the image fails to load
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(color: Colors.grey.shade200, width: 50, height: 50, child: const Icon(Icons.error_outline, color: Colors.grey));
+                            },
+                          ),
+                        ),
+                      if (activeBooking.cargoPhotoUrl == null)
+                        CircleAvatar(
+                          radius: 25,
+                          backgroundColor: Colors.grey.shade200,
+                          child: const Icon(Icons.inventory_2_outlined, color: Colors.grey, size: 24),
+                        ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            activeTruck.driverName,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              activeTruck.driverName,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${activeTruck.type} • ${activeTruck.plateNumber}',
-                            style: TextStyle(
-                                fontSize: 12, color: Colors.grey.shade500),
-                          ),
-                        ],
+                            Text(
+                              '${activeTruck.type} • ${activeTruck.plateNumber}',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey.shade500),
+                            ),
+                          ],
+                        ),
                       ),
-                      const Spacer(),
                       Row(
                         children: [
                           const Icon(Icons.star,

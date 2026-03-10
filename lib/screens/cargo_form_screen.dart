@@ -3,7 +3,14 @@
 // "What are you sending?" - cargo details booking form
 // ============================================================
 
+import 'dart:io';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../models/truck.dart';
 import '../models/booking.dart';
 import 'driver_confirmation_screen.dart';
@@ -25,8 +32,10 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
   int _weight = 15;
   int _quantity = 2;
 
-  // State: whether a photo has been "taken" (simulated)
-  bool _hasPhoto = false;
+  // State for capturing and handling the cargo image
+  File? _cargoPhoto;
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploading = false;
 
   // Available cargo categories from the wireframe
   final List<Map<String, dynamic>> _categories = [
@@ -40,6 +49,114 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
     double base = widget.truck.price;
     if (_weight > 20) base += (_weight - 20) * 2.5;
     return base;
+  }
+
+  /// Opens the camera to take a picture of the cargo.
+  Future<void> _snapPhoto() async {
+    final XFile? photo = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 85, // Initial compression
+    );
+
+    if (photo != null) {
+      setState(() {
+        _cargoPhoto = File(photo.path);
+      });
+    }
+  }
+
+  /// Resizes the captured image to a max width to save bandwidth.
+  Future<File> _resizeImage(File originalFile, {int maxWidth = 1080}) async {
+    final bytes = await originalFile.readAsBytes();
+    img.Image? image = img.decodeImage(bytes);
+    if (image == null) return originalFile;
+
+    // Resize if width > maxWidth
+    if (image.width > maxWidth) {
+      image = img.copyResize(image, width: maxWidth);
+    }
+
+    final resizedBytes = img.encodeJpg(image, quality: 85);
+
+    final tempDir = Directory.systemTemp;
+    final tempFile = File('${tempDir.path}/${originalFile.uri.pathSegments.last}');
+    await tempFile.writeAsBytes(resizedBytes);
+
+    return tempFile;
+  }
+
+  /// Uploads booking details and cargo photo, then proceeds to confirmation.
+  Future<void> _uploadAndConfirm() async {
+    if (_cargoPhoto == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Please add a photo of your cargo.'),
+            backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      // 1. Resize the image before uploading
+      final File resizedFile = await _resizeImage(_cargoPhoto!);
+
+      // 2. Prepare the multipart request
+      final uri =
+          Uri.parse('http://ov3.238.mytemp.website/pasabaybcd/api/bookings.php');
+      final request = http.MultipartRequest('POST', uri);
+
+      // 3. Add text fields (booking data)
+      final dataStore = DataStore();
+      request.fields['user_id'] = dataStore.userId?.toString() ?? '0';
+      request.fields['truck_id'] = widget.truck.id;
+      request.fields['driver_name'] = widget.truck.driverName;
+      request.fields['cargo_category'] = _selectedCategory;
+      request.fields['weight_kg'] = _weight.toString();
+      request.fields['quantity'] = _quantity.toString();
+      request.fields['estimated_fee'] = _estimatedFee.toString();
+
+      // 4. Add the image file
+      request.files.add(await http.MultipartFile.fromPath(
+        'cargo_photo', // API parameter name for the file
+        resizedFile.path,
+        contentType: MediaType('image', 'jpeg'),
+      ));
+
+      // 5. Send the request and wait for response
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      if (!mounted) return;
+
+      // 6. Handle the response
+      if (response.statusCode == 201) { // 201 Created is a good practice for POST
+        if (responseBody.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking failed: Server returned an empty response.'), backgroundColor: Colors.red));
+          return;
+        }
+        final responseData = json.decode(responseBody);
+
+        // Create a Booking object from the server's response
+        final newBooking = Booking.fromJson(responseData['booking']);
+
+        // Navigate to the confirmation screen
+        Navigator.push(context, MaterialPageRoute(builder: (_) => DriverConfirmationScreen(truck: widget.truck, booking: newBooking)));
+      } else {
+        if (responseBody.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Booking failed (Code: ${response.statusCode}). No details from server.'), backgroundColor: Colors.red));
+          return;
+        }
+        final errorData = json.decode(responseBody);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Booking failed: ${errorData['error'] ?? 'Unknown server error'}'), backgroundColor: Colors.red));
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('An error occurred: $e'), backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
   }
 
   @override
@@ -107,51 +224,45 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
 
             // Snap photo section
             GestureDetector(
-              onTap: () {
-                // Simulate taking a photo by toggling state
-                setState(() => _hasPhoto = !_hasPhoto);
-              },
+              onTap: _snapPhoto,
               child: Container(
                 width: double.infinity,
                 height: 140,
                 decoration: BoxDecoration(
-                  color: _hasPhoto
-                      ? const Color(0xFFEBF2FF)
-                      : Colors.grey.shade50,
+                  color: _cargoPhoto != null ? const Color(0xFFEBF2FF) : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: _hasPhoto
-                        ? const Color(0xFF1A56DB)
-                        : Colors.grey.shade300,
+                    color: _cargoPhoto != null ? const Color(0xFF1A56DB) : Colors.grey.shade300,
                     style: BorderStyle.solid,
                     width: 1.5,
                   ),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _hasPhoto
-                          ? Icons.check_circle_outline
-                          : Icons.camera_alt_outlined,
-                      size: 36,
-                      color: _hasPhoto
-                          ? const Color(0xFF1A56DB)
-                          : Colors.grey.shade400,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _hasPhoto ? 'Photo added!' : 'Snap Photo of Cargo',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: _hasPhoto
-                            ? const Color(0xFF1A56DB)
-                            : Colors.grey.shade500,
+                // Show the captured image or the prompt to take one.
+                child: _cargoPhoto != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12.5),
+                        child: Image.file(
+                          _cargoPhoto!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                        ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.camera_alt_outlined, size: 36, color: Colors.grey.shade400),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Snap Photo of Cargo',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -363,43 +474,30 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                   child: SizedBox(
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Create a booking and navigate to confirmation
-                        final booking = Booking(
-                          id: 'BK-${DateTime.now().millisecondsSinceEpoch}',
-                          truckId: widget.truck.id,
-                          driverName: widget.truck.driverName,
-                          cargoCategory: _selectedCategory,
-                          weightKg: _weight.toDouble(),
-                          quantity: _quantity,
-                          estimatedFee: _estimatedFee,
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DriverConfirmationScreen(
-                              truck: widget.truck,
-                              booking: booking,
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _isUploading ? null : _uploadAndConfirm,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1A56DB),
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: const Color(0xFF1A56DB).withOpacity(0.7),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'CONFIRM',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      child: _isUploading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            )
+                          : const Text(
+                              'CONFIRM',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                     ),
                   ),
                 ),
