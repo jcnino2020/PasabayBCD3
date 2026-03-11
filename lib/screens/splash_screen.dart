@@ -46,28 +46,26 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 2000));
 
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getInt('userId');
+    // Check for the saved user data JSON string, which is now saved by the login screen.
+    final userDataString = prefs.getString('userData');
 
-    if (userId != null) {
-      // User session found, try to fetch user data to restore state
-      try {
-        final uri = Uri.parse('http://ov3.238.mytemp.website/pasabaybcd/api/get_user.php')
-            .replace(queryParameters: {'user_id': userId.toString()});
-        
-        final response = await http.get(uri);
-
-        if (mounted && response.statusCode == 200) {
-          final userData = json.decode(response.body);
+    if (userDataString != null) {
+      // User session found. Restore the session data directly without a network call.
+      if (mounted) {
+        try {
+          final userData = json.decode(userDataString);
           DataStore().setUserData(userData);
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (_) => const MainScreen()),
           );
           return; // Exit function on success
+        } catch (e) {
+          // If JSON is corrupted or data is invalid, clear it and proceed to login.
+          debugPrint("Failed to parse saved user data: $e");
+          await prefs.remove('userData');
         }
-      } catch (e) {
-        // If fetching fails for any reason (e.g. no internet), proceed to login.
-        debugPrint("Failed to restore session: $e");
       }
     }
 

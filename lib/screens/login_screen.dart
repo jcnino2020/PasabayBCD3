@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/booking.dart';
 import 'main_screen.dart';
+import 'registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,7 +38,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Basic email validation
   bool _isValidEmail(String email) {
-    return email.contains('@') && email.contains('.');
+    // Use a regular expression for more robust email validation.
+    final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9-]+\.[a-zA-Z]+");
+    return emailRegex.hasMatch(email);
   }
 
   // Simulate login logic (no real backend, just navigates on success)
@@ -66,13 +69,16 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // We send the data as a form field to work around server configurations
+      // that might strip raw JSON bodies.
       final response = await http.post(
         Uri.parse('http://ov3.238.mytemp.website/pasabaybcd/api/login.php'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': email,
-          'password': password,
-        }),
+        body: {
+          'payload': json.encode({
+            'email': email,
+            'password': password,
+          })
+        },
       );
 
       if (!mounted) return;
@@ -81,9 +87,9 @@ class _LoginScreenState extends State<LoginScreen> {
         final userData = json.decode(response.body);
         DataStore().setUserData(userData); // Update the central data store
 
-        // Save user ID to persist session
+        // Store the entire user data map as a JSON string for faster session restoration.
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('userId', userData['id']);
+        await prefs.setString('userData', json.encode(userData));
         
         Navigator.pushReplacement(
           context,
@@ -93,7 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
         final errorData = json.decode(response.body);
         setState(() {
           _errorMessage = errorData['error'] ?? 'An unknown error occurred.';
-          _isLoading = false;
         });
       }
     } catch (e) {
@@ -103,10 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         // Provide a more helpful error message for non-network errors.
         _errorMessage = 'An error occurred while processing login. Please try again.';
-        _isLoading = false;
       });
     } finally {
-      if (mounted && _isLoading) {
+      if (mounted) {
         setState(() => _isLoading = false);
       }
     }
@@ -305,6 +309,30 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                 ),
+              ),
+              const SizedBox(height: 24),
+
+              // Registration link
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Don't have an account? ",
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const RegistrationScreen()),
+                      );
+                    },
+                    child: const Text(
+                      'Sign Up',
+                      style: TextStyle(color: Color(0xFF1A56DB), fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

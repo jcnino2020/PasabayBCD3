@@ -124,4 +124,18 @@ class DataStore {
   void completeBooking() {
     activeBooking = null;
   }
+
+  /// Clears all user-specific data and resets the DataStore to its initial state.
+  /// This is used during logout.
+  void clearUserData() {
+    userId = null;
+    merchantName = "Aling Nena's Stall"; // Reset to default
+    marketLocation = 'Libertad Market, Aisle 8'; // Reset to default
+    profilePhotoUrl = null;
+    isKycVerified = false;
+    balance = 460.0; // Reset to default
+    totalSavings = 2840.0; // Reset to default
+    transactions = List.from(sampleTransactions);
+    activeBooking = null;
+  }
 }
