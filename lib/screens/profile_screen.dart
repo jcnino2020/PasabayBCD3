@@ -15,6 +15,9 @@ import '../models/booking.dart'; // Import for DataStore
 import 'login_screen.dart';
 import 'kyc_screen.dart';
 import 'faq_screen.dart';
+import 'booking_history_screen.dart';
+import 'notifications_screen.dart';
+import 'about_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -431,14 +434,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.history,
                             label: 'Shipment History',
                             color: Colors.grey.shade600,
-                            onTap: () => _showShipmentHistory(context, dataStore),
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingHistoryScreen())),
                           ),
                           const Divider(height: 1, indent: 56),
                           _buildMenuTile(
                             icon: Icons.notifications_outlined,
                             label: 'Notifications',
                             color: Colors.grey.shade600,
-                            onTap: () => _showNotifications(context),
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
                           ),
                           const Divider(height: 1, indent: 56),
                           _buildMenuTile(
@@ -446,6 +449,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             label: 'Help & Support',
                             color: Colors.grey.shade600,
                             onTap: () => _showHelpSupport(context),
+                          ),
+                          const Divider(height: 1, indent: 56),
+                          _buildMenuTile(
+                            icon: Icons.info_outline,
+                            label: 'About PasabayBCD',
+                            color: Colors.grey.shade600,
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen())),
                           ),
                         ],
                       ),

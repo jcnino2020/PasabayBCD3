@@ -15,6 +15,7 @@ import 'dart:convert';
 import '../models/truck.dart';
 import '../models/booking.dart';
 import 'main_screen.dart';
+import 'rating_screen.dart';
 
 class LiveTrackingScreen extends StatefulWidget {
   const LiveTrackingScreen({
@@ -523,18 +524,23 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                       onPressed: () {
                         // Mark booking as complete in DataStore
                         DataStore().completeBooking();
-                        
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Cargo received! Transaction completed.'),
                             backgroundColor: Color(0xFF10B981),
                           ),
                         );
-                        
-                        // Return to home
+
+                        // Navigate to the rating screen so the user can review the driver
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
+                          MaterialPageRoute(
+                            builder: (_) => RatingScreen(
+                              driverName: activeTruck.driverName,
+                              truckType: activeTruck.type,
+                            ),
+                          ),
                           (route) => false,
                         );
                       },
