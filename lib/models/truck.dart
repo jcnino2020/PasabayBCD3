@@ -3,6 +3,21 @@
 // Represents a truck/vehicle available for cargo booking
 // ============================================================
 
+// Helper to safely parse a value that might be a String or a num
+double _toDouble(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
+
+int _toInt(dynamic value) {
+  if (value == null) return 0;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
 class Truck {
   final String id;
   final int driverId;       // Foreign key to the drivers table
@@ -36,16 +51,16 @@ class Truck {
   factory Truck.fromJson(Map<String, dynamic> json) {
     return Truck(
       id: json['id'].toString(),
-      driverId: (json['driver_id'] as num?)?.toInt() ?? 0,
+      driverId: _toInt(json['driver_id']),
       type: json['type'] ?? 'N/A',
       driverName: json['driver_name'] ?? 'Unknown Driver',
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      rating: _toDouble(json['rating']),
       plateNumber: json['plate_number'] ?? 'N/A',
       route: json['current_route'] ?? 'No route',
       departTime: json['depart_time'] ?? 'N/A',
-      price: (json['base_price'] as num?)?.toDouble() ?? 0.0,
-      capacityKg: (json['capacity_kg'] as num?)?.toDouble() ?? 0.0,
-      capacityCbm: (json['capacity_cbm'] as num?)?.toDouble() ?? 0.0,
+      price: _toDouble(json['base_price']),
+      capacityKg: _toDouble(json['capacity_kg']),
+      capacityCbm: _toDouble(json['capacity_cbm']),
       profilePhotoUrl: json['profile_photo_url'],
     );
   }

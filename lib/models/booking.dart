@@ -5,6 +5,21 @@
 
 import 'truck.dart';
 
+// Helper to safely parse a value that might be a String or a num
+double _toDouble(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
+
+int _toInt(dynamic value) {
+  if (value == null) return 0;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
 class Booking {
   final String id;
   final String truckId;
@@ -35,9 +50,9 @@ class Booking {
       truckId: json['truck_id'].toString(),
       driverName: json['driver_name'] ?? 'N/A',
       cargoCategory: json['cargo_category'] ?? 'N/A',
-      weightKg: (json['cargo_weight_kg'] as num?)?.toDouble() ?? 0.0,
-      quantity: (json['cargo_quantity'] as num?)?.toInt() ?? 0,
-      estimatedFee: (json['estimated_fee'] as num?)?.toDouble() ?? 0.0,
+      weightKg: _toDouble(json['cargo_weight_kg']),
+      quantity: _toInt(json['cargo_quantity']),
+      estimatedFee: _toDouble(json['estimated_fee']),
       status: json['status'] ?? 'pending',
       cargoPhotoUrl: json['cargo_photo_url'],
     );
@@ -61,7 +76,7 @@ class Transaction {
     return Transaction(
       date: json['formatted_date'] ?? 'N/A',
       label: json['label'] ?? 'Unknown Transaction',
-      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      amount: _toDouble(json['amount']),
     );
   }
 }
