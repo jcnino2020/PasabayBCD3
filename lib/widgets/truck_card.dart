@@ -70,7 +70,13 @@ class TruckCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: Colors.grey.shade200,
-                  child: const Icon(Icons.person, color: Colors.grey, size: 20),
+                  // Show the driver's profile photo if available from the API
+                  backgroundImage: truck.profilePhotoUrl != null
+                      ? NetworkImage(truck.profilePhotoUrl!)
+                      : null,
+                  child: truck.profilePhotoUrl == null
+                      ? const Icon(Icons.person, color: Colors.grey, size: 20)
+                      : null,
                 ),
                 const SizedBox(width: 10),
                 Column(

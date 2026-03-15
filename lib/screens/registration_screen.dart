@@ -29,6 +29,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  // Password strength tracking (0.0 to 1.0)
+  double _passwordStrength = 0.0;
+  String _passwordStrengthLabel = '';
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -36,6 +40,45 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  // Calculates password strength based on length, character variety, etc.
+  // Returns a value between 0.0 (empty) and 1.0 (very strong).
+  void _updatePasswordStrength(String password) {
+    double strength = 0.0;
+    String label = '';
+
+    if (password.isEmpty) {
+      setState(() {
+        _passwordStrength = 0.0;
+        _passwordStrengthLabel = '';
+      });
+      return;
+    }
+
+    // +0.25 for meeting minimum length
+    if (password.length >= 6) strength += 0.25;
+    // +0.25 for having uppercase AND lowercase letters
+    if (password.contains(RegExp(r'[a-z]')) && password.contains(RegExp(r'[A-Z]'))) strength += 0.25;
+    // +0.25 for including a number
+    if (password.contains(RegExp(r'[0-9]'))) strength += 0.25;
+    // +0.25 for including a special character
+    if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength += 0.25;
+
+    if (strength <= 0.25) {
+      label = 'Weak';
+    } else if (strength <= 0.5) {
+      label = 'Fair';
+    } else if (strength <= 0.75) {
+      label = 'Good';
+    } else {
+      label = 'Strong';
+    }
+
+    setState(() {
+      _passwordStrength = strength;
+      _passwordStrengthLabel = label;
+    });
   }
 
   // Basic email validation
@@ -181,7 +224,54 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               const SizedBox(height: 20),
               _buildTextField(controller: _emailController, label: 'EMAIL ADDRESS', hint: 'jane.doe@email.com', keyboardType: TextInputType.emailAddress),
               const SizedBox(height: 20),
-              _buildPasswordField(controller: _passwordController, label: 'PASSWORD', isVisible: _isPasswordVisible, onToggleVisibility: () => setState(() => _isPasswordVisible = !_isPasswordVisible)),
+              _buildPasswordField(
+                controller: _passwordController,
+                label: 'PASSWORD',
+                isVisible: _isPasswordVisible,
+                onToggleVisibility: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                onChanged: _updatePasswordStrength,
+              ),
+              // Password strength indicator bar
+              if (_passwordStrength > 0) ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: _passwordStrength,
+                          backgroundColor: Colors.grey.shade200,
+                          // Color changes based on strength: red -> orange -> blue -> green
+                          color: _passwordStrength <= 0.25
+                              ? Colors.red
+                              : _passwordStrength <= 0.5
+                                  ? Colors.orange
+                                  : _passwordStrength <= 0.75
+                                      ? const Color(0xFF1A56DB)
+                                      : const Color(0xFF10B981),
+                          minHeight: 4,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _passwordStrengthLabel,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: _passwordStrength <= 0.25
+                            ? Colors.red
+                            : _passwordStrength <= 0.5
+                                ? Colors.orange
+                                : _passwordStrength <= 0.75
+                                    ? const Color(0xFF1A56DB)
+                                    : const Color(0xFF10B981),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 20),
               _buildPasswordField(controller: _confirmPasswordController, label: 'CONFIRM PASSWORD', isVisible: _isConfirmPasswordVisible, onToggleVisibility: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible)),
               const SizedBox(height: 24),
@@ -251,8 +341,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  // Helper widget for password fields
-  Widget _buildPasswordField({required TextEditingController controller, required String label, required bool isVisible, required VoidCallback onToggleVisibility}) {
+  // Helper widget for password fields with optional onChanged callback
+  Widget _buildPasswordField({required TextEditingController controller, required String label, required bool isVisible, required VoidCallback onToggleVisibility, ValueChanged<String>? onChanged}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -261,6 +351,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         TextField(
           controller: controller,
           obscureText: !isVisible,
+          onChanged: onChanged,
           decoration: InputDecoration(
             hintText: '••••••••',
             hintStyle: TextStyle(color: Colors.grey.shade400),
