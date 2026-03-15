@@ -1,62 +1,77 @@
 // ============================================================
 // Screen: Notifications
-// Dedicated full-screen view of user notifications
+// Fetches and displays user notifications from the backend API
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../models/booking.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Mock notification data — in a real app these would come from an API or
-    // local push notifications. Each entry has a type to determine the icon.
-    final notifications = [
-      {
-        'type': 'delivery',
-        'title': 'Delivery Complete',
-        'body': 'Your shipment to Mansilingan has been delivered successfully.',
-        'time': '2 mins ago',
-        'isRead': false,
-      },
-      {
-        'type': 'driver',
-        'title': 'Driver Arrived',
-        'body': 'Manong Juan has arrived at Libertad Market for pickup.',
-        'time': '15 mins ago',
-        'isRead': false,
-      },
-      {
-        'type': 'booking',
-        'title': 'Booking Confirmed',
-        'body': 'Your trip to Bata via Multicab has been confirmed.',
-        'time': '1 hr ago',
-        'isRead': true,
-      },
-      {
-        'type': 'promo',
-        'title': 'Weekend Promo!',
-        'body': 'Get 15% off your next booking this Saturday & Sunday.',
-        'time': '3 hrs ago',
-        'isRead': true,
-      },
-      {
-        'type': 'wallet',
-        'title': 'Top-Up Successful',
-        'body': 'Your wallet has been topped up with ₱500 via GCash.',
-        'time': '1 day ago',
-        'isRead': true,
-      },
-      {
-        'type': 'system',
-        'title': 'App Update Available',
-        'body': 'PasabayBCD v1.1 is now available. Update for new features!',
-        'time': '2 days ago',
-        'isRead': true,
-      },
-    ];
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
 
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  late Future<List<Map<String, dynamic>>> _notificationsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationsFuture = _fetchNotifications();
+  }
+
+  /// Fetches notifications for the current user from the API
+  Future<List<Map<String, dynamic>>> _fetchNotifications() async {
+    final userId = DataStore().userId ?? 0;
+    final uri = Uri.parse(
+      'http://ov3.238.mytemp.website/pasabaybcd/api/notifications.php?user_id=$userId',
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Failed to load notifications');
+    }
+  }
+
+  /// Marks all notifications as read via POST
+  Future<void> _markAllRead() async {
+    final userId = DataStore().userId ?? 0;
+    final uri = Uri.parse(
+      'http://ov3.238.mytemp.website/pasabaybcd/api/notifications.php',
+    );
+
+    try {
+      await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'action': 'mark_all_read',
+          'user_id': userId,
+        }),
+      );
+
+      // Refresh the list after marking as read
+      setState(() {
+        _notificationsFuture = _fetchNotifications();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not mark as read. Try again.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFF),
       appBar: AppBar(
@@ -75,18 +90,65 @@ class NotificationsScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-      ),
-      body: notifications.isEmpty
-          ? _buildEmptyState()
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: notifications.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final n = notifications[index];
-                return _buildNotificationCard(n);
-              },
+        actions: [
+          // Mark all as read button
+          TextButton(
+            onPressed: _markAllRead,
+            child: const Text(
+              'Mark all read',
+              style: TextStyle(fontSize: 12, color: Color(0xFF1A56DB)),
             ),
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _notificationsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade300),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Could not load notifications',
+                    style: TextStyle(color: Colors.grey.shade500),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _notificationsFuture = _fetchNotifications();
+                      });
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final notifications = snapshot.data ?? [];
+
+          if (notifications.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: notifications.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              return _buildNotificationCard(notifications[index]);
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -116,12 +178,13 @@ class NotificationsScreen extends StatelessWidget {
   }
 
   Widget _buildNotificationCard(Map<String, dynamic> notification) {
-    final bool isRead = notification['isRead'] as bool;
+    final bool isRead = (notification['is_read'] == 1 || notification['is_read'] == true);
+    final String type = notification['type'] ?? 'system';
 
     // Choose icon and color based on notification type
     IconData icon;
     Color iconColor;
-    switch (notification['type']) {
+    switch (type) {
       case 'delivery':
         icon = Icons.check_circle_outline;
         iconColor = const Color(0xFF10B981);
@@ -147,10 +210,12 @@ class NotificationsScreen extends StatelessWidget {
         iconColor = Colors.grey;
     }
 
+    // Format the created_at timestamp into a readable string
+    final String timeText = notification['created_at'] ?? '';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        // Unread notifications have a subtle blue tint
         color: isRead ? Colors.white : const Color(0xFFF0F4FF),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -160,7 +225,6 @@ class NotificationsScreen extends StatelessWidget {
             offset: const Offset(0, 1),
           ),
         ],
-        // Unread items get a left accent border
         border: isRead
             ? null
             : const Border(left: BorderSide(color: Color(0xFF1A56DB), width: 3)),
@@ -188,15 +252,16 @@ class NotificationsScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      notification['title'] as String,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
-                        color: const Color(0xFF111827),
+                    Expanded(
+                      child: Text(
+                        notification['title'] as String? ?? '',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
+                          color: const Color(0xFF111827),
+                        ),
                       ),
                     ),
-                    // Unread indicator dot
                     if (!isRead)
                       Container(
                         width: 8,
@@ -210,12 +275,12 @@ class NotificationsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  notification['body'] as String,
+                  notification['body'] as String? ?? '',
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  notification['time'] as String,
+                  timeText,
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
                 ),
               ],

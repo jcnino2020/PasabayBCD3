@@ -1,19 +1,48 @@
 // ============================================================
 // Screen: Booking History
-// Dedicated full-screen view of past bookings with status badges
+// Fetches and displays past bookings from the backend API
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../models/booking.dart';
 
-class BookingHistoryScreen extends StatelessWidget {
+class BookingHistoryScreen extends StatefulWidget {
   const BookingHistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final dataStore = DataStore();
-    final transactions = dataStore.transactions;
+  State<BookingHistoryScreen> createState() => _BookingHistoryScreenState();
+}
 
+class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
+  late Future<List<Map<String, dynamic>>> _bookingsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _bookingsFuture = _fetchBookings();
+  }
+
+  /// Fetches booking history for the current user from the API
+  Future<List<Map<String, dynamic>>> _fetchBookings() async {
+    final userId = DataStore().userId ?? 0;
+    final uri = Uri.parse(
+      'http://ov3.238.mytemp.website/pasabaybcd/api/booking_history.php?user_id=$userId',
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Failed to load booking history');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFF),
       appBar: AppBar(
@@ -33,13 +62,56 @@ class BookingHistoryScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: transactions.isEmpty
-          ? _buildEmptyState()
-          : _buildTransactionList(transactions),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _bookingsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade300),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Could not load history',
+                    style: TextStyle(color: Colors.grey.shade500),
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _bookingsFuture = _fetchBookings();
+                      });
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final bookings = snapshot.data ?? [];
+
+          if (bookings.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: bookings.length,
+            itemBuilder: (context, index) {
+              return _buildBookingCard(bookings[index]);
+            },
+          );
+        },
+      ),
     );
   }
 
-  // Shown when there are no transactions yet
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -65,116 +137,118 @@ class BookingHistoryScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTransactionList(List<Transaction> transactions) {
-    return ListView.builder(
+  Widget _buildBookingCard(Map<String, dynamic> booking) {
+    final String status = booking['status'] ?? 'pending';
+    final double fee = (booking['estimated_fee'] is String)
+        ? double.tryParse(booking['estimated_fee']) ?? 0.0
+        : (booking['estimated_fee'] as num?)?.toDouble() ?? 0.0;
+    final String driverName = booking['driver_name'] ?? 'N/A';
+    final String category = booking['cargo_category'] ?? 'N/A';
+    final String createdAt = booking['created_at'] ?? '';
+
+    // Pick icon based on status
+    final bool isCompleted = (status == 'completed' || status == 'delivered');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
-      itemCount: transactions.length,
-      itemBuilder: (context, index) {
-        final tx = transactions[index];
-        // Determine if this is a shipment expense or a top-up
-        final isExpense = tx.amount < 0;
-        // Assign a simulated status based on position in the list
-        // First item = most recent, could be "In Transit"; rest are "Delivered"
-        final status = index == 0 && DataStore().activeBooking != null
-            ? 'In Transit'
-            : isExpense
-                ? 'Delivered'
-                : 'Top Up';
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-          child: Row(
-            children: [
-              // Icon based on transaction type
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isExpense ? const Color(0xFFEBF2FF) : const Color(0xFFD1FAE5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  isExpense ? Icons.local_shipping_outlined : Icons.account_balance_wallet_outlined,
-                  color: isExpense ? const Color(0xFF1A56DB) : const Color(0xFF065F46),
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Icon based on status
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isCompleted ? const Color(0xFFD1FAE5) : const Color(0xFFEBF2FF),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isCompleted ? Icons.check_circle_outline : Icons.local_shipping_outlined,
+              color: isCompleted ? const Color(0xFF065F46) : const Color(0xFF1A56DB),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
 
-              // Transaction details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // Booking details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$category — $driverName',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
                   children: [
                     Text(
-                      tx.label,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827),
-                      ),
+                      createdAt,
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          tx.date,
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                        ),
-                        const SizedBox(width: 8),
-                        // Status badge
-                        _buildStatusBadge(status),
-                      ],
-                    ),
+                    const SizedBox(width: 8),
+                    _buildStatusBadge(status),
                   ],
                 ),
-              ),
-
-              // Amount
-              Text(
-                '${isExpense ? '-' : '+'}₱${tx.amount.abs().toStringAsFixed(0)}',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: isExpense ? const Color(0xFFDC2626) : const Color(0xFF10B981),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
-      },
+
+          // Fee amount
+          Text(
+            '-₱${fee.toStringAsFixed(0)}',
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFDC2626),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  // Returns a small colored badge showing the delivery status
   Widget _buildStatusBadge(String status) {
     Color bgColor;
     Color textColor;
+    String label;
 
     switch (status) {
-      case 'In Transit':
+      case 'pending':
         bgColor = const Color(0xFFFEF3C7);
         textColor = const Color(0xFFD97706);
+        label = 'Pending';
         break;
-      case 'Delivered':
+      case 'in_transit':
+        bgColor = const Color(0xFFFEF3C7);
+        textColor = const Color(0xFFD97706);
+        label = 'In Transit';
+        break;
+      case 'completed':
+      case 'delivered':
         bgColor = const Color(0xFFD1FAE5);
         textColor = const Color(0xFF065F46);
+        label = 'Completed';
         break;
-      default: // Top Up
+      default:
         bgColor = const Color(0xFFEBF2FF);
         textColor = const Color(0xFF1A56DB);
+        label = status;
     }
 
     return Container(
@@ -184,7 +258,7 @@ class BookingHistoryScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        status,
+        label,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,

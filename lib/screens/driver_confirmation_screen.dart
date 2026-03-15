@@ -62,8 +62,8 @@ class _DriverConfirmationScreenState extends State<DriverConfirmationScreen>
     if (!mounted) return;
     // Auto-navigate to live tracking when confirmed
     
-    // Save booking to DataStore (deducts balance, adds transaction)
-    DataStore().addBooking(widget.booking);
+    // Save booking and truck to DataStore (deducts balance, adds transaction)
+    DataStore().addBooking(widget.booking, truck: widget.truck);
 
     Navigator.pushReplacement(
       context,
