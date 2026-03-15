@@ -3,6 +3,8 @@
 // Represents a cargo booking made by a merchant
 // ============================================================
 
+import 'truck.dart';
+
 class Booking {
   final String id;
   final String truckId;
@@ -42,7 +44,7 @@ class Booking {
   }
 }
 
-// Sample past transactions for the savings dashboard
+// Represents a wallet transaction (top-up or trip expense)
 class Transaction {
   final String date;
   final String label;
@@ -64,13 +66,6 @@ class Transaction {
   }
 }
 
-List<Transaction> sampleTransactions = [
-  Transaction(date: 'Jan 14', label: 'Libertad Trip', amount: -150),
-  Transaction(date: 'Jan 12', label: 'Burgos Trip', amount: -80),
-  Transaction(date: 'Jan 10', label: 'Central Market Trip', amount: -120),
-  Transaction(date: 'Jan 8', label: 'Tangub Trip', amount: -95),
-];
-
 // ============================================================
 // DataStore: Centralized State Management (Singleton)
 // Acts as a local backend for the app
@@ -90,10 +85,11 @@ class DataStore {
   // Wallet & Financials
   double balance = 460.0;
   double totalSavings = 2840.0;
-  List<Transaction> transactions = List.from(sampleTransactions);
+  List<Transaction> transactions = [];
 
-  // Active Trip
+  // Active Trip — stores both the booking and the truck used
   Booking? activeBooking;
+  Truck? activeTruck;
 
   void setUserData(Map<String, dynamic> userData) {
     userId = userData['id'] as int?;
@@ -101,7 +97,7 @@ class DataStore {
     marketLocation = userData['market_location'] ?? 'N/A';
     profilePhotoUrl = userData['profile_photo_url'] as String?;
     isKycVerified = (userData['is_kyc_verified'] == 1 || userData['is_kyc_verified'] == true);
-    
+
     // Handle wallet_balance which may be a String or a number from JSON
     final dynamic balanceValue = userData['wallet_balance'];
     if (balanceValue is String) {
@@ -111,8 +107,9 @@ class DataStore {
     }
   }
 
-  void addBooking(Booking booking) {
+  void addBooking(Booking booking, {Truck? truck}) {
     activeBooking = booking;
+    activeTruck = truck;
     balance -= booking.estimatedFee;
     transactions.insert(0, Transaction(
       date: 'Today',
@@ -123,19 +120,21 @@ class DataStore {
 
   void completeBooking() {
     activeBooking = null;
+    activeTruck = null;
   }
 
   /// Clears all user-specific data and resets the DataStore to its initial state.
   /// This is used during logout.
   void clearUserData() {
     userId = null;
-    merchantName = "Aling Nena's Stall"; // Reset to default
-    marketLocation = 'Libertad Market, Aisle 8'; // Reset to default
+    merchantName = "Aling Nena's Stall";
+    marketLocation = 'Libertad Market, Aisle 8';
     profilePhotoUrl = null;
     isKycVerified = false;
-    balance = 460.0; // Reset to default
-    totalSavings = 2840.0; // Reset to default
-    transactions = List.from(sampleTransactions);
+    balance = 460.0;
+    totalSavings = 2840.0;
+    transactions = [];
     activeBooking = null;
+    activeTruck = null;
   }
 }

@@ -34,41 +34,98 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showEditProfileDialog(BuildContext context, DataStore dataStore) {
     final nameController = TextEditingController(text: dataStore.merchantName);
     final locationController = TextEditingController(text: dataStore.marketLocation);
+    bool isSaving = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Merchant Name'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Edit Profile'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Merchant Name'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: locationController,
+                decoration: const InputDecoration(labelText: 'Market Location'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: locationController,
-              decoration: const InputDecoration(labelText: 'Market Location'),
+            ElevatedButton(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      setDialogState(() => isSaving = true);
+
+                      try {
+                        // POST updated profile to the backend API
+                        final uri = Uri.parse(
+                          'http://ov3.238.mytemp.website/pasabaybcd/api/update_profile.php',
+                        );
+                        final response = await http.post(
+                          uri,
+                          headers: {'Content-Type': 'application/json'},
+                          body: json.encode({
+                            'user_id': dataStore.userId ?? 0,
+                            'merchant_name': nameController.text.trim(),
+                            'market_location': locationController.text.trim(),
+                          }),
+                        );
+
+                        if (!ctx.mounted) return;
+
+                        if (response.statusCode == 200) {
+                          // Update local state on success
+                          setState(() {
+                            dataStore.merchantName = nameController.text.trim();
+                            dataStore.marketLocation = locationController.text.trim();
+                          });
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profile updated!'),
+                              backgroundColor: Color(0xFF10B981),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Could not update profile. Try again.'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          setDialogState(() => isSaving = false);
+                        }
+                      } catch (e) {
+                        if (!ctx.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Network error. Please try again.'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        setDialogState(() => isSaving = false);
+                      }
+                    },
+              child: isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                dataStore.merchantName = nameController.text;
-                dataStore.marketLocation = locationController.text;
-              });
-              Navigator.pop(ctx);
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }

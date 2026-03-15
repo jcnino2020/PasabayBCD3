@@ -113,10 +113,9 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
     final activeBooking = DataStore().activeBooking;
     if (activeBooking == null) return;
 
-    // Find the truck associated with the active booking
-    final activeTruck = sampleTrucks.firstWhere(
-        (t) => t.id == activeBooking.truckId,
-        orElse: () => sampleTrucks[0]);
+    // Use the truck stored in DataStore (set during booking confirmation)
+    final activeTruck = DataStore().activeTruck;
+    if (activeTruck == null) return;
 
     // Get start position based on the truck's route
     final LatLng startPosition = _getStartPositionForRoute(activeTruck.route);
@@ -249,10 +248,23 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
       );
     }
 
-    // Resolve truck
-    final activeTruck = sampleTrucks.firstWhere(
-        (t) => t.id == activeBooking.truckId,
-        orElse: () => sampleTrucks[0]);
+    // Use the truck stored in DataStore (set during booking confirmation)
+    final activeTruck = DataStore().activeTruck;
+    if (activeTruck == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFF),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.local_shipping_outlined, size: 64, color: Colors.grey.shade300),
+              const SizedBox(height: 16),
+              Text('No active trips', style: TextStyle(color: Colors.grey.shade500)),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFF),
@@ -521,9 +533,33 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        // Mark booking as complete in DataStore
+                      onPressed: () async {
+                        // POST to complete_booking API to mark as completed in the DB
+                        try {
+                          final uri = Uri.parse(
+                            'http://ov3.238.mytemp.website/pasabaybcd/api/complete_booking.php',
+                          );
+                          await http.post(
+                            uri,
+                            headers: {'Content-Type': 'application/json'},
+                            body: json.encode({
+                              'booking_id': activeBooking.id,
+                            }),
+                          );
+                        } catch (_) {
+                          // Continue even if API fails — the user should still proceed
+                        }
+
+                        // Save references before clearing DataStore
+                        final driverName = activeTruck.driverName;
+                        final truckType = activeTruck.type;
+                        final driverId = activeTruck.driverId;
+                        final bookingId = activeBooking.id;
+
+                        // Mark booking as complete in local DataStore
                         DataStore().completeBooking();
+
+                        if (!context.mounted) return;
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -532,13 +568,15 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                           ),
                         );
 
-                        // Navigate to the rating screen so the user can review the driver
+                        // Navigate to the rating screen with driver info
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
                             builder: (_) => RatingScreen(
-                              driverName: activeTruck.driverName,
-                              truckType: activeTruck.type,
+                              driverName: driverName,
+                              truckType: truckType,
+                              driverId: driverId,
+                              bookingId: bookingId,
                             ),
                           ),
                           (route) => false,

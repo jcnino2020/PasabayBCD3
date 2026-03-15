@@ -4,16 +4,23 @@
 // ============================================================
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../models/booking.dart';
 import 'main_screen.dart';
 
 class RatingScreen extends StatefulWidget {
   final String driverName;
   final String truckType;
+  final int driverId;      // Driver's DB id — needed for the ratings API
+  final String? bookingId; // Optional booking reference
 
   const RatingScreen({
     super.key,
     required this.driverName,
     required this.truckType,
+    required this.driverId,
+    this.bookingId,
   });
 
   @override
@@ -44,6 +51,7 @@ class _RatingScreenState extends State<RatingScreen> {
     super.dispose();
   }
 
+  /// Submits the rating to the backend API
   void _submitReview() async {
     if (_selectedRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,24 +65,67 @@ class _RatingScreenState extends State<RatingScreen> {
 
     setState(() => _isSubmitting = true);
 
-    // Simulate a short delay for the "submission" (no real backend call)
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      final uri = Uri.parse(
+        'http://ov3.238.mytemp.website/pasabaybcd/api/ratings.php',
+      );
 
-    if (!mounted) return;
+      final body = {
+        'user_id': DataStore().userId ?? 0,
+        'driver_id': widget.driverId,
+        'rating': _selectedRating,
+        'tags': _selectedTags.toList().join(','),
+        'review_text': _reviewController.text.trim(),
+      };
 
-    // Show success and go back to home
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Thank you for your feedback!'),
-        backgroundColor: Color(0xFF10B981),
-      ),
-    );
+      // Include booking_id if available
+      if (widget.bookingId != null) {
+        body['booking_id'] = widget.bookingId!;
+      }
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
-      (route) => false,
-    );
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(body),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Thank you for your feedback!'),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+      } else {
+        // Show error but still navigate home so user isn't stuck
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not save rating. Please try again later.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Network error. Your rating was not saved.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        // Navigate back to home regardless of success/failure
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 0)),
+          (route) => false,
+        );
+      }
+    }
   }
 
   @override
