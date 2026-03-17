@@ -33,7 +33,7 @@ class FaqScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Frequently Asked Questions',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -54,7 +54,7 @@ class FaqScreen extends StatelessWidget {
               ],
             ),
             child: ExpansionTile(
-              title: Text(_faqs[index]['q']!, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              title: Text(_faqs[index]['q']!, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
               childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               children: [Text(_faqs[index]['a']!, style: TextStyle(color: Colors.grey.shade600, height: 1.5))],
             ),

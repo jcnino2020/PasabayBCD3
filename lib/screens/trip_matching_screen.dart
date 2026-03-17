@@ -171,7 +171,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
         children: [
           const Padding(
             padding: EdgeInsets.all(16),
-            child: Text('Select Market Location', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Text('Select Market Location', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           ),
           ...locations.map((loc) => ListTile(
             title: Text(loc),
@@ -204,10 +204,10 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Filter & Sort', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Filter & Sort', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 24),
                 
-                const Text('VEHICLE TYPE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text('VEHICLE TYPE', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 10,
@@ -229,7 +229,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                const Text('SORT BY', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text('SORT BY', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                 RadioListTile(
                   title: const Text('Highest Rated'),
                   value: 'Rating',
@@ -257,7 +257,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 54,
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
@@ -286,23 +286,23 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Notifications', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text('Notifications', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             Expanded(
               child: ListView(
                 children: const [
                   ListTile(
-                    leading: CircleAvatar(backgroundColor: Color(0xFFEBF2FF), child: Icon(Icons.discount, color: Color(0xFF1A56DB), size: 20)),
+                    leading: CircleAvatar(backgroundColor: Color(0xFFEBF2FF), child: Icon(Icons.discount, color: Color(0xFF1A56DB), size: 22)),
                     title: Text('Welcome Discount', style: TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text('Get ₱50 off your first booking!'),
-                    trailing: Text('Just now', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    trailing: Text('Just now', style: TextStyle(fontSize: 12, color: Colors.grey)),
                   ),
                   Divider(),
                   ListTile(
-                    leading: CircleAvatar(backgroundColor: Color(0xFFEBF2FF), child: Icon(Icons.info, color: Color(0xFF1A56DB), size: 20)),
+                    leading: CircleAvatar(backgroundColor: Color(0xFFEBF2FF), child: Icon(Icons.info, color: Color(0xFF1A56DB), size: 22)),
                     title: Text('System Update', style: TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text('Maintenance scheduled for tonight.'),
-                    trailing: Text('1d ago', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    trailing: Text('1d ago', style: TextStyle(fontSize: 12, color: Colors.grey)),
                   ),
                 ],
               ),
@@ -354,12 +354,12 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                 children: [
                   Text(
                     _getGreeting(),
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
                   ),
                   Text(
                     dataStore.merchantName,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF111827),
                     ),
@@ -401,8 +401,8 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
               controller: _searchController,
               decoration: const InputDecoration(
                 hintText: 'Search by destination or driver...',
-                hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
-                prefixIcon: Icon(Icons.search, color: Colors.grey, size: 20),
+                hintStyle: TextStyle(fontSize: 15, color: Colors.grey),
+                prefixIcon: Icon(Icons.search, color: Colors.grey, size: 22),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 12),
               ),
@@ -458,14 +458,14 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
             ),
             child: Row(
               children: [
-                Icon(weather.icon, color: const Color(0xFFF59E0B), size: 32),
+                Icon(weather.icon, color: const Color(0xFFF59E0B), size: 34),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('${weather.temperature.toStringAsFixed(0)}°C', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text(weather.description, style: TextStyle(color: Colors.grey.shade600, fontSize: 12), overflow: TextOverflow.ellipsis),
+                    Text('${weather.temperature.toStringAsFixed(0)}°C', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(weather.description, style: TextStyle(color: Colors.grey.shade600, fontSize: 14), overflow: TextOverflow.ellipsis),
                   ],
                 )
               ],
@@ -488,13 +488,13 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
         children: [
           const Text(
             'BALANCE',
-            style: TextStyle(fontSize: 10, color: Color(0xFF1A56DB), fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 12, color: Color(0xFF1A56DB), fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             '₱${dataStore.balance.toStringAsFixed(0)}',
             style: const TextStyle(
-              fontSize: 22,
+              fontSize: 24,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1A56DB),
             ),
@@ -520,13 +520,13 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
           Icon(
             hasActiveTrip ? Icons.local_shipping : Icons.watch_later_outlined,
             color: hasActiveTrip ? const Color(0xFF065F46) : Colors.grey.shade500,
-            size: 24,
+            size: 26,
           ),
           const Spacer(),
           Text(
             hasActiveTrip ? '1 Active Trip' : 'No Active Trips',
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               color: hasActiveTrip ? const Color(0xFF065F46) : Colors.grey.shade700,
             ),
@@ -561,7 +561,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                         const Text(
                           'TRUCKS FROM',
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: Colors.grey,
                             letterSpacing: 1.2,
@@ -571,13 +571,13 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                         Text(
                           _selectedLocation.toUpperCase(),
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1A56DB),
                             letterSpacing: 1.2,
                           ),
                         ),
-                        const Icon(Icons.keyboard_arrow_down, color: Colors.grey, size: 16),
+                        const Icon(Icons.keyboard_arrow_down, color: Colors.grey, size: 18),
                       ],
                     ),
                   ),
@@ -595,12 +595,12 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.tune, size: 12, color: _selectedVehicleType != 'All' ? Colors.white : const Color(0xFF1A56DB)),
+                          Icon(Icons.tune, size: 14, color: _selectedVehicleType != 'All' ? Colors.white : const Color(0xFF1A56DB)),
                           const SizedBox(width: 4),
                           Text(
                         'FILTER',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: _selectedVehicleType != 'All'
                               ? Colors.white
@@ -637,7 +637,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                                    const Icon(Icons.error_outline, color: Colors.red, size: 52),
                                     const SizedBox(height: 16),
                                     Text('Failed to load trucks: ${snapshot.error}', textAlign: TextAlign.center),
                                     const SizedBox(height: 16),
@@ -660,12 +660,12 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                                 child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.local_shipping_outlined, size: 60, color: Colors.grey.shade300),
+                                Icon(Icons.local_shipping_outlined, size: 64, color: Colors.grey.shade300),
                                 const SizedBox(height: 12),
                                 Text(
                                   'No trucks available\nfor this route.',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                                  style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
                                 ),
                               ],
                             )),

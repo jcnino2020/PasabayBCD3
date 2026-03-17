@@ -173,7 +173,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
         title: const Text(
           'BOOKING DETAILS',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: FontWeight.w700,
             color: Color(0xFF111827),
             letterSpacing: 1.0,
@@ -215,7 +215,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
             const Text(
               'What are you sending?',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 24,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF111827),
               ),
@@ -251,12 +251,12 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.camera_alt_outlined, size: 36, color: Colors.grey.shade400),
+                          Icon(Icons.camera_alt_outlined, size: 40, color: Colors.grey.shade400),
                           const SizedBox(height: 8),
                           Text(
                             'Snap Photo of Cargo',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: Colors.grey.shade500,
                             ),
@@ -271,7 +271,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
             const Text(
               'CARGO CATEGORY',
               style: TextStyle(
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: Colors.grey,
                 letterSpacing: 1.2,
@@ -302,7 +302,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                       children: [
                         Icon(
                           cat['icon'] as IconData,
-                          size: 16,
+                          size: 18,
                           color:
                               isSelected ? Colors.white : Colors.grey.shade600,
                         ),
@@ -310,7 +310,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                         Text(
                           cat['label'],
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: isSelected
                                 ? Colors.white
@@ -336,7 +336,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                       const Text(
                         'WEIGHT (KG)',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: Colors.grey,
                           letterSpacing: 1.2,
@@ -355,7 +355,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.remove, size: 16),
+                              icon: const Icon(Icons.remove, size: 18),
                               onPressed: _weight > 1
                                   ? () => setState(() => _weight--)
                                   : null,
@@ -366,12 +366,12 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                             Text(
                               '$_weight',
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.add, size: 16),
+                              icon: const Icon(Icons.add, size: 18),
                               onPressed: () => setState(() => _weight++),
                               color: const Color(0xFF1A56DB),
                               padding: EdgeInsets.zero,
@@ -392,7 +392,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                       const Text(
                         'QUANTITY',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: Colors.grey,
                           letterSpacing: 1.2,
@@ -410,7 +410,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.remove, size: 16),
+                              icon: const Icon(Icons.remove, size: 18),
                               onPressed: _quantity > 1
                                   ? () => setState(() => _quantity--)
                                   : null,
@@ -421,12 +421,12 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                             Text(
                               '$_quantity',
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.add, size: 16),
+                              icon: const Icon(Icons.add, size: 18),
                               onPressed: () => setState(() => _quantity++),
                               color: const Color(0xFF1A56DB),
                               padding: EdgeInsets.zero,
@@ -451,7 +451,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                     const Text(
                       'EST. FEE',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: Colors.grey,
                         letterSpacing: 1.2,
@@ -461,7 +461,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                     Text(
                       '₱${_estimatedFee.toStringAsFixed(2)}',
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF111827),
                       ),
@@ -472,7 +472,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                 // Confirm button
                 Expanded(
                   child: SizedBox(
-                    height: 52,
+                    height: 56,
                     child: ElevatedButton(
                       onPressed: _isUploading ? null : _uploadAndConfirm,
                       style: ElevatedButton.styleFrom(
@@ -493,7 +493,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                           : const Text(
                               'CONFIRM',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.5,
                               ),

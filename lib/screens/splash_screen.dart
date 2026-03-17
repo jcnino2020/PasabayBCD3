@@ -105,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen>
                 child: const Icon(
                   Icons.local_shipping,
                   color: Colors.white,
-                  size: 48,
+                  size: 52,
                 ),
               ),
               const SizedBox(height: 20),
@@ -113,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen>
               const Text(
                 'PasabayBCD',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 30,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF111827),
                   letterSpacing: -0.5,
@@ -124,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen>
               Text(
                 'SME LOGISTICS HUB',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey.shade500,
                   letterSpacing: 2.5,

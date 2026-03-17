@@ -85,7 +85,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           'Notifications',
           style: TextStyle(
             color: Color(0xFF111827),
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -96,7 +96,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             onPressed: _markAllRead,
             child: const Text(
               'Mark all read',
-              style: TextStyle(fontSize: 12, color: Color(0xFF1A56DB)),
+              style: TextStyle(fontSize: 14, color: Color(0xFF1A56DB)),
             ),
           ),
         ],
@@ -113,7 +113,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade300),
+                  Icon(Icons.cloud_off, size: 52, color: Colors.grey.shade300),
                   const SizedBox(height: 12),
                   Text(
                     'Could not load notifications',
@@ -157,12 +157,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade300),
+          Icon(Icons.notifications_off_outlined, size: 68, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
             'No notifications',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Colors.grey.shade500,
             ),
@@ -170,7 +170,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           const SizedBox(height: 6),
           Text(
             "You're all caught up!",
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+            style: TextStyle(fontSize: 15, color: Colors.grey.shade400),
           ),
         ],
       ),
@@ -240,7 +240,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               color: iconColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: iconColor, size: 20),
+            child: Icon(icon, color: iconColor, size: 22),
           ),
           const SizedBox(width: 14),
 
@@ -256,7 +256,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       child: Text(
                         notification['title'] as String? ?? '',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
                           color: const Color(0xFF111827),
                         ),
@@ -276,12 +276,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   notification['body'] as String? ?? '',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
+                  style: TextStyle(fontSize: 15, color: Colors.grey.shade600, height: 1.4),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   timeText,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
                 ),
               ],
             ),

@@ -80,7 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 child: Text(
                   'Skip',
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
                 ),
               ),
             ),
@@ -118,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           _pages[index]['title']!,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 24,
+                            fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF111827),
                             height: 1.2,
@@ -130,7 +130,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           _pages[index]['subtitle']!,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             color: Colors.grey.shade600,
                             height: 1.5,
                           ),
@@ -168,7 +168,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: () {
                     if (_currentPage < _pages.length - 1) {
@@ -198,7 +198,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ? 'Next'
                         : 'Get Started',
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

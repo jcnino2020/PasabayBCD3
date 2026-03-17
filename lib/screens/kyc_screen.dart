@@ -137,7 +137,7 @@ class _KycVerificationScreenState extends State<KycVerificationScreen> {
       appBar: AppBar(
         title: const Text(
           'Business Verification',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -153,11 +153,11 @@ class _KycVerificationScreenState extends State<KycVerificationScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.verified_user, size: 80, color: Color(0xFF10B981)),
+          const Icon(Icons.verified_user, size: 84, color: Color(0xFF10B981)),
           const SizedBox(height: 24),
           const Text(
             'You are Verified!',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
@@ -177,7 +177,7 @@ class _KycVerificationScreenState extends State<KycVerificationScreen> {
         children: [
           const Text(
             'Verify your Identity',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
@@ -219,7 +219,7 @@ class _KycVerificationScreenState extends State<KycVerificationScreen> {
                       children: [
                         const Icon(
                           Icons.cloud_upload_outlined,
-                          size: 40,
+                          size: 44,
                           color: Colors.grey,
                         ),
                         const SizedBox(height: 12),
@@ -238,7 +238,7 @@ class _KycVerificationScreenState extends State<KycVerificationScreen> {
 
           SizedBox(
             width: double.infinity,
-            height: 50,
+            height: 54,
             child: ElevatedButton(
               onPressed: _isSubmitting ? null : () => _submitVerification(dataStore),
               child: _isSubmitting

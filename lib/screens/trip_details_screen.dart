@@ -17,7 +17,7 @@ class TripDetailsScreen extends StatelessWidget {
           Container(
             height: MediaQuery.of(context).size.height * 0.4,
             color: Colors.grey.shade200,
-            child: Center(child: Icon(Icons.local_shipping, size: 100, color: Colors.grey.shade400)),
+            child: Center(child: Icon(Icons.local_shipping, size: 104, color: Colors.grey.shade400)),
           ),
 
           // Back Button
@@ -60,7 +60,7 @@ class TripDetailsScreen extends StatelessWidget {
                             backgroundImage: truck.profilePhotoUrl != null
                                 ? NetworkImage('${truck.profilePhotoUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
                                 : null,
-                            child: truck.profilePhotoUrl == null ? const Icon(Icons.person, size: 30, color: Colors.grey) : null,
+                            child: truck.profilePhotoUrl == null ? const Icon(Icons.person, size: 34, color: Colors.grey) : null,
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -69,22 +69,22 @@ class TripDetailsScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   truck.driverName,
-                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                                 ),
                                 Text(
                                   truck.plateNumber,
-                                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                                 ),
                               ],
                             ),
                           ),
                           Row(
                             children: [
-                              const Icon(Icons.star, color: Color(0xFFFBBF24), size: 18),
+                              const Icon(Icons.star, color: Color(0xFFFBBF24), size: 20),
                               const SizedBox(width: 4),
                               Text(
                                 truck.rating.toString(),
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -95,7 +95,7 @@ class TripDetailsScreen extends StatelessWidget {
                       const SizedBox(height: 16),
 
                       // Vehicle Details
-                      const Text("VEHICLE DETAILS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.5)),
+                      const Text("VEHICLE DETAILS", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.5)),
                       const SizedBox(height: 16),
                       _buildDetailRow(Icons.local_shipping_outlined, "Vehicle Type", truck.type),
                       _buildDetailRow(Icons.scale_outlined, "Max Capacity", "${truck.capacityKg.toInt()} kg"),
@@ -103,7 +103,7 @@ class TripDetailsScreen extends StatelessWidget {
                       const SizedBox(height: 16),
 
                       // Route Details
-                      const Text("ROUTE DETAILS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.5)),
+                      const Text("ROUTE DETAILS", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.5)),
                       const SizedBox(height: 16),
                       _buildDetailRow(Icons.route_outlined, "Route", truck.route),
                       _buildDetailRow(Icons.schedule_outlined, "Departs Around", truck.departTime),
@@ -112,7 +112,7 @@ class TripDetailsScreen extends StatelessWidget {
                       // Booking Button
                       SizedBox(
                         width: double.infinity,
-                        height: 52,
+                        height: 56,
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.push(
@@ -130,10 +130,10 @@ class TripDetailsScreen extends StatelessWidget {
                             children: [
                               Text(
                                 'Book for ₱${truck.price.toStringAsFixed(0)}',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(width: 12),
-                              const Icon(Icons.arrow_forward_ios, size: 16),
+                              const Icon(Icons.arrow_forward_ios, size: 18),
                             ],
                           ),
                         ),
@@ -154,11 +154,11 @@ class TripDetailsScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey.shade500, size: 20),
+          Icon(icon, color: Colors.grey.shade500, size: 22),
           const SizedBox(width: 16),
-          Text(title, style: TextStyle(fontSize: 14, color: Colors.grey.shade700)),
+          Text(title, style: TextStyle(fontSize: 16, color: Colors.grey.shade700)),
           const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ],
       ),
     );
