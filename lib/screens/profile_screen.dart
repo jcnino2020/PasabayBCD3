@@ -144,7 +144,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const Text(
               'Shipment History',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -202,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const Text(
               'Notifications',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -215,11 +215,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     contentPadding: EdgeInsets.zero,
                     leading: const CircleAvatar(
                       backgroundColor: Color(0xFFEBF2FF),
-                      child: Icon(Icons.notifications, color: Color(0xFF1A56DB), size: 20),
+                      child: Icon(Icons.notifications, color: Color(0xFF1A56DB), size: 22),
                     ),
                     title: Text(n['title']!, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(n['body']!),
-                    trailing: Text(n['time']!, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                    trailing: Text(n['time']!, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   );
                 },
               ),
@@ -353,7 +353,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Text(
                     'MERCHANT PROFILE',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF111827),
                       letterSpacing: 1.5,
@@ -393,7 +393,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             dataStore.merchantName,
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF111827),
                             ),
@@ -402,7 +402,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             dataStore.marketLocation,
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 15,
                               color: Colors.grey.shade500,
                             ),
                           ),
@@ -439,7 +439,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     dataStore.isKycVerified
                                         ? Icons.verified
                                         : Icons.pending_outlined,
-                                    size: 14,
+                                    size: 16,
                                     color: dataStore.isKycVerified
                                         ? const Color(0xFF065F46)
                                         : const Color(0xFFD97706),
@@ -450,7 +450,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ? 'KYC Verified'
                                         : 'KYC Pending',
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: dataStore.isKycVerified
                                           ? const Color(0xFF065F46)
@@ -587,7 +587,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(
                       'PasabayBCD v1.0.0 · BSIT 3-B',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 13,
                         color: Colors.grey.shade400,
                       ),
                     ),
@@ -615,7 +615,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: Colors.grey.shade200,
           backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
           child: imageUrl == null
-              ? const Icon(Icons.store_outlined, size: 40, color: Colors.grey)
+              ? const Icon(Icons.store_outlined, size: 44, color: Colors.grey)
               : null,
         ),
         Positioned(
@@ -636,7 +636,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: EdgeInsets.all(6.0),
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Icon(Icons.edit, color: Colors.white, size: 16),
+                  : const Icon(Icons.edit, color: Colors.white, size: 18),
             ),
           ),
         ),
@@ -661,17 +661,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, size: 18, color: color),
+        child: Icon(icon, size: 20, color: color),
       ),
       title: Text(
         label,
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: FontWeight.w500,
           color: color == Colors.red ? Colors.red : const Color(0xFF111827),
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
     );
   }
 }

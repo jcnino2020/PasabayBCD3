@@ -56,7 +56,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           'Shipment History',
           style: TextStyle(
             color: Color(0xFF111827),
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -74,7 +74,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.cloud_off, size: 48, color: Colors.grey.shade300),
+                  Icon(Icons.cloud_off, size: 52, color: Colors.grey.shade300),
                   const SizedBox(height: 12),
                   Text(
                     'Could not load history',
@@ -117,12 +117,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade300),
+          Icon(Icons.inventory_2_outlined, size: 68, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
             'No shipments yet',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Colors.grey.shade500,
             ),
@@ -130,7 +130,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           const SizedBox(height: 6),
           Text(
             'Your completed deliveries will appear here.',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+            style: TextStyle(fontSize: 15, color: Colors.grey.shade400),
           ),
         ],
       ),
@@ -176,7 +176,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
             child: Icon(
               isCompleted ? Icons.check_circle_outline : Icons.local_shipping_outlined,
               color: isCompleted ? const Color(0xFF065F46) : const Color(0xFF1A56DB),
-              size: 22,
+              size: 24,
             ),
           ),
           const SizedBox(width: 14),
@@ -189,7 +189,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                 Text(
                   '$category — $driverName',
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF111827),
                   ),
@@ -199,7 +199,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
                   children: [
                     Text(
                       createdAt,
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                     ),
                     const SizedBox(width: 8),
                     _buildStatusBadge(status),
@@ -213,7 +213,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
           Text(
             '-₱${fee.toStringAsFixed(0)}',
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: FontWeight.w700,
               color: Color(0xFFDC2626),
             ),
@@ -260,7 +260,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: FontWeight.w700,
           color: textColor,
         ),

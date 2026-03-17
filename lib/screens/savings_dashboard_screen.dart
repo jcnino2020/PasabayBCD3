@@ -68,9 +68,9 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Top Up Wallet', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('Top Up Wallet', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
-                const Text('SELECT AMOUNT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text('SELECT AMOUNT', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 10,
@@ -89,7 +89,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                   }).toList(),
                 ),
                 const SizedBox(height: 20),
-                const Text('PAYMENT METHOD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text('PAYMENT METHOD', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 10),
                 ...['GCash', 'Maya', 'Bank Transfer'].map((method) => RadioListTile(
                   title: Text(method),
@@ -104,7 +104,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 54,
                   child: ElevatedButton(
                     onPressed: isToppingUp ? null : () async {
                       if (dataStore.userId == null) {
@@ -235,7 +235,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                   const Text(
                     'FINANCIALS',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF111827),
                       letterSpacing: 1.5,
@@ -269,7 +269,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                     Text(
                       'TOTAL SAVINGS',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withOpacity(0.5),
                         letterSpacing: 1.5,
@@ -279,7 +279,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                     Text(
                       '₱${_dataStore.totalSavings.toStringAsFixed(0)}',
                       style: const TextStyle(
-                        fontSize: 38,
+                        fontSize: 40,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -291,7 +291,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                         Text(
                           'BALANCE: ₱${_dataStore.balance.toStringAsFixed(0)}',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: Colors.white.withOpacity(0.6),
                           ),
@@ -309,7 +309,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                             child: const Text(
                               'TOP UP',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
                               ),
@@ -375,7 +375,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                   const Text(
                     'RECENT TRANSACTIONS',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: Colors.grey,
                       letterSpacing: 1.2,
@@ -394,7 +394,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('All Transactions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                              const Text('All Transactions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 16),
                               Expanded( // Use FutureBuilder here as well for the full list
                                 child: ListView.separated(
@@ -424,7 +424,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                     child: const Text(
                       'See All',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         color: Color(0xFF1A56DB),
                       ),
                     ),
@@ -470,22 +470,22 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
                               child: Icon(
                                 tx.amount < 0 ? Icons.local_shipping_outlined : Icons.account_balance_wallet_outlined,
                                 color: tx.amount < 0 ? const Color(0xFFD97706) : const Color(0xFF065F46),
-                                size: 20,
+                                size: 22,
                               ),
                             ),
                             const SizedBox(width: 12),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(tx.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                                Text(tx.date, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                                Text(tx.label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                                Text(tx.date, style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
                               ],
                             ),
                             const Spacer(),
                             Text(
                               '${tx.amount < 0 ? '-' : '+'}₱${tx.amount.abs().toStringAsFixed(0)}',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: tx.amount < 0 ? const Color(0xFFDC2626) : const Color(0xFF10B981),
                               ),
@@ -522,12 +522,12 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: 18, color: const Color(0xFF1A56DB)),
+            Icon(icon, size: 20, color: const Color(0xFF1A56DB)),
             const SizedBox(height: 8),
             Text(
               value,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 17,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF111827),
               ),
@@ -535,7 +535,7 @@ class _SavingsDashboardScreenState extends State<SavingsDashboardScreen> {
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
             ),
           ],
         ),

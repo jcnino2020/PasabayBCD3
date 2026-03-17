@@ -207,7 +207,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               const Text(
                 'Create Account',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 30,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF111827),
                 ),
@@ -215,7 +215,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               const SizedBox(height: 6),
               Text(
                 'Start managing your shipments today.',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 40),
 
@@ -258,7 +258,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     Text(
                       _passwordStrengthLabel,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: _passwordStrength <= 0.25
                             ? Colors.red
@@ -287,14 +287,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFFCA5A5)),
                   ),
-                  child: Text(_errorMessage!, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 13)),
+                  child: Text(_errorMessage!, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 15)),
                 ),
               const SizedBox(height: 8),
 
               // Sign Up Button
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleRegister,
                   style: ElevatedButton.styleFrom(
@@ -306,7 +306,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   child: _isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Sign Up', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                      : const Text('Sign Up', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -321,7 +321,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey, letterSpacing: 1.2)),
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -346,7 +346,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.grey, letterSpacing: 1.2)),
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -362,7 +362,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1A56DB), width: 1.5)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             suffixIcon: IconButton(
-              icon: Icon(isVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.grey, size: 20),
+              icon: Icon(isVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.grey, size: 22),
               onPressed: onToggleVisibility,
             ),
           ),

@@ -23,7 +23,7 @@ class AboutScreen extends StatelessWidget {
           'About PasabayBCD',
           style: TextStyle(
             color: Color(0xFF111827),
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -43,13 +43,13 @@ class AboutScreen extends StatelessWidget {
                 color: const Color(0xFF1A56DB),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.local_shipping, color: Colors.white, size: 40),
+              child: const Icon(Icons.local_shipping, color: Colors.white, size: 44),
             ),
             const SizedBox(height: 16),
             const Text(
               'PasabayBCD',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 26,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF111827),
               ),
@@ -57,12 +57,12 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'SME Logistics Hub for Bacolod City',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              style: TextStyle(fontSize: 15, color: Colors.grey.shade500),
             ),
             const SizedBox(height: 4),
             Text(
               'Version 1.0.0',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
             ),
             const SizedBox(height: 32),
 
@@ -126,12 +126,12 @@ class AboutScreen extends StatelessWidget {
             // Footer
             Text(
               '2026 PasabayBCD. All rights reserved.',
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
             ),
             const SizedBox(height: 4),
             Text(
               'BSIT 3-B · Bacolod City',
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
             ),
             const SizedBox(height: 24),
           ],
@@ -162,7 +162,7 @@ class AboutScreen extends StatelessWidget {
           Text(
             title,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: FontWeight.w700,
               color: Color(0xFF111827),
             ),
@@ -172,7 +172,7 @@ class AboutScreen extends StatelessWidget {
             Text(
               content,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 color: Colors.grey.shade600,
                 height: 1.6,
               ),
@@ -190,7 +190,7 @@ class AboutScreen extends StatelessWidget {
         CircleAvatar(
           radius: 18,
           backgroundColor: const Color(0xFFEBF2FF),
-          child: Icon(Icons.person_outline, size: 18, color: Colors.grey.shade500),
+          child: Icon(Icons.person_outline, size: 20, color: Colors.grey.shade500),
         ),
         const SizedBox(width: 12),
         Column(
@@ -199,14 +199,14 @@ class AboutScreen extends StatelessWidget {
             Text(
               role,
               style: const TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF111827),
               ),
             ),
             Text(
               section,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
             ),
           ],
         ),
@@ -225,7 +225,7 @@ class AboutScreen extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(
-          fontSize: 12,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: Color(0xFF1A56DB),
         ),

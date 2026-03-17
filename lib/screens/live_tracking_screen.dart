@@ -355,7 +355,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                         const Text(
                           'In Transit',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF10B981),
                           ),
@@ -380,7 +380,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                     child: Text(
                       activeBooking.id.substring(0, 7),
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF111827),
                       ),
@@ -429,13 +429,13 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                       Icon(
                         _hasArrived ? Icons.check_circle : Icons.schedule,
                         color: _hasArrived ? const Color(0xFF10B981) : const Color(0xFF1A56DB),
-                        size: 18,
+                        size: 20,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _hasArrived ? 'The truck has arrived' : 'Arriving in ${_currentEtaMinutes.ceil()} mins',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF111827),
                         ),
@@ -456,7 +456,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.phone,
-                              color: Color(0xFF1A56DB), size: 18),
+                              color: Color(0xFF1A56DB), size: 20),
                         ),
                       ),
                     ],
@@ -467,7 +467,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                     child: Text(
                       '${activeTruck.driverName} is transporting your shipment.',
                       style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade500),
+                          fontSize: 14, color: Colors.grey.shade500),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -500,14 +500,14 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                             Text(
                               activeTruck.driverName,
                               style: const TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             Text(
                               '${activeTruck.type} • ${activeTruck.plateNumber}',
                               style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade500),
+                                  fontSize: 14, color: Colors.grey.shade500),
                             ),
                           ],
                         ),
@@ -515,12 +515,12 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                       Row(
                         children: [
                           const Icon(Icons.star,
-                              color: Color(0xFFFBBF24), size: 14),
+                              color: Color(0xFFFBBF24), size: 16),
                           const SizedBox(width: 2),
                           Text(
                             activeTruck.rating.toString(),
                             style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600),
+                                fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -531,7 +531,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                   // Complete Delivery Button
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 54,
                     child: ElevatedButton(
                       onPressed: () async {
                         // POST to complete_booking API to mark as completed in the DB

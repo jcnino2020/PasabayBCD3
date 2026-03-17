@@ -132,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text(
                 'Welcome Back',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 30,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF111827),
                 ),
@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 6),
               Text(
                 'Log in to manage your shipments.',
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 40),
 
@@ -148,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text(
                 'EMAIL ADDRESS',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Colors.grey,
                   letterSpacing: 1.2,
@@ -186,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const Text(
                 'PASSWORD',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Colors.grey,
                   letterSpacing: 1.2,
@@ -223,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
                       color: Colors.grey,
-                      size: 20,
+                      size: 22,
                     ),
                     onPressed: () {
                       // Toggle password visibility using setState
@@ -249,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Forgot Password?',
                     style: TextStyle(
                       color: Color(0xFF1A56DB),
-                      fontSize: 13,
+                      fontSize: 15,
                     ),
                   ),
                 ),
@@ -270,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     _errorMessage!,
                     style: const TextStyle(
-                        color: Color(0xFFDC2626), fontSize: 13),
+                        color: Color(0xFFDC2626), fontSize: 15),
                   ),
                 ),
 
@@ -279,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Sign In button
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 56,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
@@ -304,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       : const Text(
                           'Sign In',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -318,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(
                     "Don't have an account? ",
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -329,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     child: const Text(
                       'Sign Up',
-                      style: TextStyle(color: Color(0xFF1A56DB), fontWeight: FontWeight.bold, fontSize: 13),
+                      style: TextStyle(color: Color(0xFF1A56DB), fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                   ),
                 ],

@@ -109,7 +109,7 @@ class _DriverConfirmationScreenState extends State<DriverConfirmationScreen>
                   ),
                   child: const Icon(
                     Icons.manage_search,
-                    size: 50,
+                    size: 54,
                     color: Color(0xFF1A56DB),
                   ),
                 ),
@@ -120,7 +120,7 @@ class _DriverConfirmationScreenState extends State<DriverConfirmationScreen>
               const Text(
                 'Confirming with Driver...',
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF111827),
                 ),
@@ -132,7 +132,7 @@ class _DriverConfirmationScreenState extends State<DriverConfirmationScreen>
                 _statusMessage,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 16,
                   color: Colors.grey.shade600,
                   height: 1.5,
                 ),
@@ -178,7 +178,7 @@ class _DriverConfirmationScreenState extends State<DriverConfirmationScreen>
                   'CANCEL REQUEST',
                   style: TextStyle(
                     color: Colors.red,
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
                   ),
