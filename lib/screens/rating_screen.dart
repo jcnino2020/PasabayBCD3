@@ -156,9 +156,11 @@ class _RatingScreenState extends State<RatingScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-        child: Column(
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          child: Column(
           children: [
             const SizedBox(height: 8),
 
@@ -380,6 +382,7 @@ class _RatingScreenState extends State<RatingScreen> {
             const SizedBox(height: 16),
           ],
         ),
+      ),
       ),
     );
   }

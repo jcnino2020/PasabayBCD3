@@ -40,8 +40,10 @@ class FaqScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(20),
+      body: SafeArea(
+        top: false,
+        child: ListView.separated(
+          padding: const EdgeInsets.all(20),
         itemCount: _faqs.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
@@ -60,6 +62,7 @@ class FaqScreen extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
     );
   }

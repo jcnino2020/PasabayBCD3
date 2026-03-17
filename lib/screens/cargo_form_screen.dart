@@ -180,9 +180,11 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Progress indicator (2 steps)
@@ -506,6 +508,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
       ),
     );
   }

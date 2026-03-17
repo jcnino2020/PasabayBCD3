@@ -101,9 +101,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _notificationsFuture,
-        builder: (context, snapshot) {
+      body: SafeArea(
+        top: false,
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _notificationsFuture,
+          builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -148,6 +150,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             },
           );
         },
+      ),
       ),
     );
   }

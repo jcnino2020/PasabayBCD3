@@ -144,7 +144,10 @@ class _KycVerificationScreenState extends State<KycVerificationScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: isVerified ? _buildVerifiedState() : _buildForm(dataStore),
+      body: SafeArea(
+        top: false,
+        child: isVerified ? _buildVerifiedState() : _buildForm(dataStore),
+      ),
     );
   }
 
