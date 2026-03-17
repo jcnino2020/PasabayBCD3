@@ -1,3 +1,8 @@
+// ============================================================
+// Screen 08: Live Tracking Screen (Core)
+// Shows a real OpenStreetMaps map with driver route and ETA
+// ============================================================
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -23,6 +28,7 @@ class LiveTrackingScreen extends StatefulWidget {
 
 class _LiveTrackingScreenState extends State<LiveTrackingScreen>
     with TickerProviderStateMixin {
+  // --- Map and Location State ---
   final MapController _mapController = MapController();
   final Location _locationService = Location();
 
@@ -31,8 +37,10 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
   LatLng? _truckPosition;
   double _truckRotation = 0.0;
 
+  // --- Animation State ---
   late AnimationController _truckAnimController;
 
+  // --- UI State ---
   double _initialEtaMinutes = 0;
   double _currentEtaMinutes = 0;
   bool _hasArrived = false;
@@ -47,6 +55,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
         _updateTruckAndEta();
       })..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
+          // When animation finishes, update the UI to show arrival
           setState(() {
             _hasArrived = true;
           });
@@ -57,6 +66,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
   }
 
   Future<void> _fetchRoute(LatLng start, LatLng end) async {
+    // OSRM API endpoint for driving routes
     final url =
         'https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?geometries=geojson';
 
@@ -64,10 +74,13 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        // Extract the coordinates from the GeoJSON response
         final coordinates = data['routes'][0]['geometry']['coordinates'] as List;
+        // Extract the duration from the response (in seconds)
         final durationInSeconds = data['routes'][0]['duration'] as num;
         final durationInMinutes = durationInSeconds / 60.0;
 
+        // OSRM returns [longitude, latitude], so we need to map it to LatLng(latitude, longitude)
         final points = coordinates.map((c) => LatLng(c[1], c[0])).toList();
         setState(() {
           _polylineCoordinates = points;
@@ -76,6 +89,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
         });
       } else {
         debugPrint('Failed to fetch route: ${response.statusCode}');
+        // Fallback to a straight line if the API fails
         setState(() => _polylineCoordinates = [start, end]);
       }
     } catch (e) {
@@ -87,27 +101,32 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
   LatLng _getStartPositionForRoute(String route) {
     final routeLowerCase = route.toLowerCase();
     if (routeLowerCase.contains('burgos')) {
-      return const LatLng(10.6765, 122.9534);
+      return const LatLng(10.6765, 122.9534); // Burgos Public Market
     } else if (routeLowerCase.contains('central market')) {
-      return const LatLng(10.6633, 122.9503);
+      return const LatLng(10.6633, 122.9503); // Bacolod Public Plaza / Central Market
     }
-    return const LatLng(10.6675, 122.9461);
+    // Default to Libertad Market
+    return const LatLng(10.6675, 122.9461); // Libertad Market
   }
 
   void _setupMapAndIcons() async {
     final activeBooking = DataStore().activeBooking;
     if (activeBooking == null) return;
 
+    // Use the truck stored in DataStore (set during booking confirmation)
     final activeTruck = DataStore().activeTruck;
     if (activeTruck == null) return;
 
+    // Get start position based on the truck's route
     final LatLng startPosition = _getStartPositionForRoute(activeTruck.route);
 
+    // Get user's current location as the destination
     try {
       final locationData = await _locationService.getLocation();
       final destinationPosition =
           LatLng(locationData.latitude!, locationData.longitude!);
 
+      // Fetch the road-based route before setting state
       await _fetchRoute(startPosition, destinationPosition);
 
       setState(() {
@@ -121,9 +140,11 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
       });
 
       _animateCameraToRoute();
+      // Start the animation with its fixed duration
       _truckAnimController.forward();
     } catch (e) {
       debugPrint("Could not get location: $e");
+      // Handle location permission errors, etc.
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not get your location. Please enable location services.')),
       );
@@ -146,10 +167,12 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
 
     final animationValue = _truckAnimController.value;
 
+    // Calculate which segment of the multi-point polyline we are on
     final double totalSegments = (_polylineCoordinates.length - 1).toDouble();
     final double currentSegmentPos = totalSegments * animationValue;
     final int currentSegmentIndex = currentSegmentPos.floor();
 
+    // Ensure we don't go out of bounds at the end of the animation
     if (currentSegmentIndex >= _polylineCoordinates.length - 1) {
       if (_truckPosition != _polylineCoordinates.last) {
         setState(() => _truckPosition = _polylineCoordinates.last);
@@ -157,11 +180,13 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
       return;
     }
 
+    // Calculate how far along the current segment we are (0.0 to 1.0)
     final double segmentProgress = currentSegmentPos - currentSegmentIndex;
 
     final LatLng segmentStart = _polylineCoordinates[currentSegmentIndex];
     final LatLng segmentEnd = _polylineCoordinates[currentSegmentIndex + 1];
 
+    // Interpolate between the start and end points of the current segment
     final lat = segmentStart.latitude + (segmentEnd.latitude - segmentStart.latitude) * segmentProgress;
     final lng = segmentStart.longitude + (segmentEnd.longitude - segmentStart.longitude) * segmentProgress;
     final newPosition = LatLng(lat, lng);
@@ -170,10 +195,12 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
 
     setState(() {
       _truckPosition = newPosition;
+      // Only update rotation if it changes significantly to avoid jitter
       if ((bearing - _truckRotation).abs() > 1.0) {
         _truckRotation = bearing;
       }
 
+      // Update ETA based on animation progress
       _currentEtaMinutes = _initialEtaMinutes * (1.0 - animationValue);
     });
   }
@@ -201,8 +228,10 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Resolve booking from args or DataStore
     final activeBooking = DataStore().activeBooking;
     
+    // If no active booking, show empty state
     if (activeBooking == null) {
       return Scaffold(
         backgroundColor: const Color(0xFFF8FAFF),
@@ -219,6 +248,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
       );
     }
 
+    // Use the truck stored in DataStore (set during booking confirmation)
     final activeTruck = DataStore().activeTruck;
     if (activeTruck == null) {
       return Scaffold(
@@ -240,13 +270,16 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
       backgroundColor: const Color(0xFFF8FAFF),
       body: Stack(
         children: [
+          // Real OpenStreetMap, renamed for clarity
           _buildOpenStreetMap(),
 
+          // Map controls (Zoom and Recenter)
           Positioned(
-            bottom: 350,
+            bottom: 350, // Position above the bottom sheet
             right: 16,
             child: Column(
               children: [
+                // Zoom In
                 FloatingActionButton.small(
                   heroTag: 'zoomInBtn',
                   backgroundColor: Colors.white,
@@ -258,6 +291,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                   child: const Icon(Icons.add),
                 ),
                 const SizedBox(height: 8),
+                // Zoom Out
                 FloatingActionButton.small(
                   heroTag: 'zoomOutBtn',
                   backgroundColor: Colors.white,
@@ -269,12 +303,14 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                   child: const Icon(Icons.remove),
                 ),
                 const SizedBox(height: 16),
+                // Recenter on Truck
                 FloatingActionButton(
                   heroTag: 'recenterBtn',
                   backgroundColor: const Color(0xFF1A56DB),
                   foregroundColor: Colors.white,
                   onPressed: () {
                     if (_truckPosition != null) {
+                      // Animate the camera to the truck's position with a good zoom level
                       _mapController.move(_truckPosition!, 16.0);
                     }
                   },
@@ -284,12 +320,14 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
             ),
           ),
 
+          // Status badge at top
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // In Transit badge
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 6),
@@ -317,7 +355,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                         const Text(
                           'In Transit',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF10B981),
                           ),
@@ -325,6 +363,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                       ],
                     ),
                   ),
+                  // Booking ID
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 6),
@@ -341,7 +380,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                     child: Text(
                       activeBooking.id.substring(0, 7),
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF111827),
                       ),
@@ -352,6 +391,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
             ),
           ),
 
+          // Bottom info card
           Positioned(
             bottom: 0,
             left: 0,
@@ -372,6 +412,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Handle bar
                   Container(
                     width: 36,
                     height: 4,
@@ -382,23 +423,25 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                   ),
                   const SizedBox(height: 16),
 
+                  // ETA row
                   Row(
                     children: [
                       Icon(
                         _hasArrived ? Icons.check_circle : Icons.schedule,
                         color: _hasArrived ? const Color(0xFF10B981) : const Color(0xFF1A56DB),
-                        size: 18,
+                        size: 20,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         _hasArrived ? 'The truck has arrived' : 'Arriving in ${_currentEtaMinutes.ceil()} mins',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF111827),
                         ),
                       ),
                       const Spacer(),
+                      // Call driver button
                       GestureDetector(
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -413,7 +456,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.phone,
-                              color: Color(0xFF1A56DB), size: 18),
+                              color: Color(0xFF1A56DB), size: 20),
                         ),
                       ),
                     ],
@@ -424,19 +467,22 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                     child: Text(
                       '${activeTruck.driverName} is transporting your shipment.',
                       style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade500),
+                          fontSize: 14, color: Colors.grey.shade500),
                     ),
                   ),
                   const SizedBox(height: 16),
                   const Divider(),
                   const SizedBox(height: 12),
 
+                  // Driver info row
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      // --- Driver's Profile Photo ---
                       CircleAvatar(
                         radius: 25,
                         backgroundColor: Colors.grey.shade200,
+                        // Use a cache-busting URL for the driver's photo
                         backgroundImage: activeTruck.profilePhotoUrl != null
                             ? NetworkImage(
                                 '${activeTruck.profilePhotoUrl!}?v=${DateTime.now().millisecondsSinceEpoch}')
@@ -454,14 +500,14 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                             Text(
                               activeTruck.driverName,
                               style: const TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             Text(
                               '${activeTruck.type} • ${activeTruck.plateNumber}',
                               style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade500),
+                                  fontSize: 14, color: Colors.grey.shade500),
                             ),
                           ],
                         ),
@@ -469,12 +515,12 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                       Row(
                         children: [
                           const Icon(Icons.star,
-                              color: Color(0xFFFBBF24), size: 14),
+                              color: Color(0xFFFBBF24), size: 16),
                           const SizedBox(width: 2),
                           Text(
                             activeTruck.rating.toString(),
                             style: const TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w600),
+                                fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -482,11 +528,13 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                   ),
                   const SizedBox(height: 20),
                   
+                  // Complete Delivery Button
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 54,
                     child: ElevatedButton(
                       onPressed: () async {
+                        // POST to complete_booking API to mark as completed in the DB
                         try {
                           final uri = Uri.parse(
                             'http://ov3.238.mytemp.website/pasabaybcd/api/complete_booking.php',
@@ -499,13 +547,16 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                             }),
                           );
                         } catch (_) {
+                          // Continue even if API fails — the user should still proceed
                         }
 
+                        // Save references before clearing DataStore
                         final driverName = activeTruck.driverName;
                         final truckType = activeTruck.type;
                         final driverId = activeTruck.driverId;
                         final bookingId = activeBooking.id;
 
+                        // Mark booking as complete in local DataStore
                         DataStore().completeBooking();
 
                         if (!context.mounted) return;
@@ -517,6 +568,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
                           ),
                         );
 
+                        // Navigate to the rating screen with driver info
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
@@ -550,7 +602,7 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
     return FlutterMap(
       mapController: _mapController,
       options: const MapOptions(
-        initialCenter: LatLng(10.6675, 122.9461),
+        initialCenter: LatLng(10.6675, 122.9461), // Bacolod City center
         initialZoom: 14,
         interactionOptions: InteractionOptions(
           flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
