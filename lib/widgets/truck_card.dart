@@ -47,7 +47,7 @@ class TruckCard extends StatelessWidget {
                   child: Text(
                     truck.type,
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1A56DB),
                     ),
@@ -56,7 +56,7 @@ class TruckCard extends StatelessWidget {
                 Text(
                   '₱${truck.price.toStringAsFixed(0)}',
                   style: const TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF111827),
                   ),
@@ -75,7 +75,7 @@ class TruckCard extends StatelessWidget {
                       ? NetworkImage(truck.profilePhotoUrl!)
                       : null,
                   child: truck.profilePhotoUrl == null
-                      ? const Icon(Icons.person, color: Colors.grey, size: 20)
+                      ? const Icon(Icons.person, color: Colors.grey, size: 22)
                       : null,
                 ),
                 const SizedBox(width: 10),
@@ -85,19 +85,19 @@ class TruckCard extends StatelessWidget {
                     Text(
                       truck.driverName,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF111827),
                       ),
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.star, color: Color(0xFFFBBF24), size: 12),
+                        const Icon(Icons.star, color: Color(0xFFFBBF24), size: 14),
                         const SizedBox(width: 2),
                         Text(
                           '${truck.rating} • ${truck.plateNumber}',
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 13,
                             color: Colors.grey,
                           ),
                         ),
@@ -116,11 +116,11 @@ class TruckCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.route, size: 13, color: Colors.grey),
+                    const Icon(Icons.route, size: 15, color: Colors.grey),
                     const SizedBox(width: 4),
                     Text(
                       truck.route,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -133,7 +133,7 @@ class TruckCard extends StatelessWidget {
                   child: Text(
                     truck.departTime,
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFFD97706),
                     ),

@@ -23,8 +23,8 @@ class PasabayBottomNavBar extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       selectedItemColor: const Color(0xFF1A56DB),
       unselectedItemColor: Colors.grey,
-      selectedFontSize: 11,
-      unselectedFontSize: 11,
+      selectedFontSize: 13,
+      unselectedFontSize: 13,
       elevation: 8,
       backgroundColor: Colors.white,
       items: const [

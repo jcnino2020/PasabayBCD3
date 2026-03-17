@@ -150,7 +150,7 @@ class _RatingScreenState extends State<RatingScreen> {
           'Rate Your Experience',
           style: TextStyle(
             color: Color(0xFF111827),
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -175,13 +175,13 @@ class _RatingScreenState extends State<RatingScreen> {
                   CircleAvatar(
                     radius: 36,
                     backgroundColor: const Color(0xFFEBF2FF),
-                    child: Icon(Icons.person, size: 36, color: Colors.grey.shade400),
+                    child: Icon(Icons.person, size: 40, color: Colors.grey.shade400),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     widget.driverName,
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF111827),
                     ),
@@ -189,7 +189,7 @@ class _RatingScreenState extends State<RatingScreen> {
                   const SizedBox(height: 4),
                   Text(
                     widget.truckType,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                    style: TextStyle(fontSize: 15, color: Colors.grey.shade500),
                   ),
                 ],
               ),
@@ -200,7 +200,7 @@ class _RatingScreenState extends State<RatingScreen> {
             const Text(
               'How was your delivery?',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF111827),
               ),
@@ -220,7 +220,7 @@ class _RatingScreenState extends State<RatingScreen> {
                       starNumber <= _selectedRating
                           ? Icons.star_rounded
                           : Icons.star_outline_rounded,
-                      size: 44,
+                      size: 48,
                       color: starNumber <= _selectedRating
                           ? const Color(0xFFFBBF24)
                           : Colors.grey.shade300,
@@ -242,7 +242,7 @@ class _RatingScreenState extends State<RatingScreen> {
                               ? 'Good experience!'
                               : 'Excellent!',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 color: _selectedRating == 0 ? Colors.grey.shade400 : const Color(0xFF1A56DB),
                 fontWeight: FontWeight.w500,
               ),
@@ -255,7 +255,7 @@ class _RatingScreenState extends State<RatingScreen> {
               child: Text(
                 'QUICK FEEDBACK',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Colors.grey.shade500,
                   letterSpacing: 1.2,
@@ -287,7 +287,7 @@ class _RatingScreenState extends State<RatingScreen> {
                     child: Text(
                       tag,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: isSelected ? Colors.white : Colors.grey.shade600,
                       ),
@@ -304,7 +304,7 @@ class _RatingScreenState extends State<RatingScreen> {
               child: Text(
                 'ADDITIONAL COMMENTS (OPTIONAL)',
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Colors.grey.shade500,
                   letterSpacing: 1.2,
@@ -317,7 +317,7 @@ class _RatingScreenState extends State<RatingScreen> {
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Tell us more about your experience...',
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
                 filled: true,
                 fillColor: Colors.grey.shade50,
                 border: OutlineInputBorder(
@@ -339,7 +339,7 @@ class _RatingScreenState extends State<RatingScreen> {
             // Submit button
             SizedBox(
               width: double.infinity,
-              height: 52,
+              height: 56,
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitReview,
                 style: ElevatedButton.styleFrom(
@@ -357,7 +357,7 @@ class _RatingScreenState extends State<RatingScreen> {
                       )
                     : const Text(
                         'Submit Review',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                       ),
               ),
             ),
@@ -374,7 +374,7 @@ class _RatingScreenState extends State<RatingScreen> {
               },
               child: Text(
                 'Skip for now',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 15),
               ),
             ),
             const SizedBox(height: 16),
