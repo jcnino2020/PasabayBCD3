@@ -64,4 +64,22 @@ class Truck {
       profilePhotoUrl: json['profile_photo_url'],
     );
   }
+
+  /// Convert this Truck to a Map for SQLite storage.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'driver_id': driverId,
+      'type': type,
+      'driver_name': driverName,
+      'rating': rating,
+      'plate_number': plateNumber,
+      'current_route': route,
+      'depart_time': departTime,
+      'base_price': price,
+      'capacity_kg': capacityKg,
+      'capacity_cbm': capacityCbm,
+      'profile_photo_url': profilePhotoUrl,
+    };
+  }
 }
