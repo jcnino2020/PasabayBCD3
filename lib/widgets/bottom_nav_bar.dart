@@ -39,6 +39,11 @@ class PasabayBottomNavBar extends StatelessWidget {
           label: 'Active',
         ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.inventory_2_outlined),
+          activeIcon: Icon(Icons.inventory_2),
+          label: 'Products',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.account_balance_wallet_outlined),
           activeIcon: Icon(Icons.account_balance_wallet),
           label: 'Wallet',

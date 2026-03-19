@@ -17,6 +17,9 @@ dependencies:
   location: ^6.0.2
   shared_preferences: ^2.2.3
   http: ^1.2.1
+  sqflite: ^2.3.0
+  path_provider: ^2.1.1
+  connectivity_plus: ^5.0.2
   image_picker: ^1.0.7
   flutter_svg: ^2.0.9
   image: ^4.1.3

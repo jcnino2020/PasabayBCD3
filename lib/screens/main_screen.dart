@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'trip_matching_screen.dart';
 import 'live_tracking_screen.dart';
+import 'product_list_screen.dart';
 import 'savings_dashboard_screen.dart';
 import 'profile_screen.dart';
 
@@ -21,6 +22,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const TripMatchingScreen(),
     const LiveTrackingScreen(), // Handles its own "No Active Trip" state
+    const ProductListScreen(), // Offline-first product management
     const SavingsDashboardScreen(),
     const ProfileScreen(),
   ];
