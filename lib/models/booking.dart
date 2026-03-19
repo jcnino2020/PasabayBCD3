@@ -57,6 +57,21 @@ class Booking {
       cargoPhotoUrl: json['cargo_photo_url'],
     );
   }
+
+  /// Convert this Booking to a Map for SQLite storage.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'truck_id': truckId,
+      'driver_name': driverName,
+      'cargo_category': cargoCategory,
+      'cargo_weight_kg': weightKg,
+      'cargo_quantity': quantity,
+      'estimated_fee': estimatedFee,
+      'status': status,
+      'cargo_photo_url': cargoPhotoUrl,
+    };
+  }
 }
 
 // Represents a wallet transaction (top-up or trip expense)
