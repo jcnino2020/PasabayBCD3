@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'database/db_initializer.dart';
@@ -6,8 +7,10 @@ import 'screens/splash_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize the local SQLite database before anything else
-  await DbInitializer.initialize();
+  // sqflite is mobile-only — skip DB init when running on web
+  if (!kIsWeb) {
+    await DbInitializer.initialize();
+  }
 
   // Lock the app to portrait mode only (mobile app UX best practice)
   SystemChrome.setPreferredOrientations([
