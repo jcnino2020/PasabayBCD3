@@ -21,7 +21,6 @@ dependencies:
   flutter_svg: ^2.0.9
   image: ^4.1.3
 
-  # SQLite offline storage
   sqflite: ^2.3.0
   path: ^1.8.3
 
