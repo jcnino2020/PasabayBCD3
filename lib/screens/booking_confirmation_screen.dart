@@ -76,7 +76,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                     const Divider(height: 24),
                     _buildRow('Driver', truck.driverName),
                     const SizedBox(height: 12),
-                    _buildRow('Vehicle', truck.vehicleType),
+                    _buildRow('Vehicle', truck.type),
                     const SizedBox(height: 12),
                     _buildRow('Plate No.', truck.plateNumber),
                     const SizedBox(height: 12),
