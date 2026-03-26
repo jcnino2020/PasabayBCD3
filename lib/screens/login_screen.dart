@@ -12,6 +12,7 @@ import '../models/booking.dart';
 import 'main_screen.dart';
 import 'registration_screen.dart';
 import 'forgot_password_screen.dart';
+import 'driver/driver_main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -81,10 +82,18 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userData', json.encode(userData));
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
+        final role = userData['role'] ?? 'passenger';
+        if (role == 'driver') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const DriverMainScreen()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const MainScreen()),
+          );
+        }
       } else {
         final errorData = json.decode(response.body);
         setState(() {
