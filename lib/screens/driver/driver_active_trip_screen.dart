@@ -32,16 +32,11 @@ class _DriverActiveTripScreenState extends State<DriverActiveTripScreen> {
   Future<void> _completeTrip() async {
     setState(() => _isUpdating = true);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final driverJson = prefs.getString('driverData');
-      final driverData = driverJson != null ? json.decode(driverJson) : {};
-
       final response = await http.post(
         Uri.parse('$_baseUrl/driver_update_status.php'),
         body: {
           'payload': json.encode({
-            'driver_id': driverData['driver_id'],
-            'booking_id': _booking['booking_id'].toString(),
+            'booking_id': _booking['id'].toString(),
             'status': 'completed',
           }),
         },
@@ -69,16 +64,20 @@ class _DriverActiveTripScreenState extends State<DriverActiveTripScreen> {
                   backgroundColor: const Color(0xFF1A56DB),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: const Text('Back to Dashboard'),
+                child: const Text('Back to Dashboard', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to complete trip.'), backgroundColor: Color(0xFFEF4444)),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to complete trip.'), backgroundColor: Color(0xFFEF4444)),
+          const SnackBar(content: Text('Network error. Please try again.'), backgroundColor: Color(0xFFEF4444)),
         );
       }
     }
@@ -100,7 +99,6 @@ class _DriverActiveTripScreenState extends State<DriverActiveTripScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status banner
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -117,7 +115,7 @@ class _DriverActiveTripScreenState extends State<DriverActiveTripScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text('In Transit', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF1A56DB))),
-                      Text('Booking #${_booking['booking_id']}', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                      Text('Booking #${_booking['id']}', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
                     ],
                   ),
                 ],
@@ -125,17 +123,7 @@ class _DriverActiveTripScreenState extends State<DriverActiveTripScreen> {
             ),
             const SizedBox(height: 28),
 
-            // Route
-            const Text('Route', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
-            const SizedBox(height: 12),
-            _RouteCard(
-              pickup: _booking['pickup_address'] ?? '-',
-              delivery: _booking['delivery_address'] ?? '-',
-            ),
-            const SizedBox(height: 24),
-
-            // Cargo summary
-            const Text('Cargo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
+            const Text('Cargo Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -146,15 +134,16 @@ class _DriverActiveTripScreenState extends State<DriverActiveTripScreen> {
               ),
               child: Column(
                 children: [
-                  _InfoRow(label: 'Type', value: _booking['cargo_type'] ?? '-'),
-                  _InfoRow(label: 'Weight', value: '${_booking['weight'] ?? '-'} kg'),
-                  _InfoRow(label: 'Notes', value: _booking['notes'] ?? 'None'),
+                  _InfoRow(label: 'Category', value: _booking['cargo_category'] ?? '-'),
+                  _InfoRow(label: 'Weight', value: '${_booking['cargo_weight_kg'] ?? '-'} kg'),
+                  _InfoRow(label: 'Qty', value: '${_booking['cargo_quantity'] ?? '-'} pcs'),
+                  _InfoRow(label: 'Fee', value: '₱${_booking['estimated_fee'] ?? '-'}'),
+                  _InfoRow(label: 'Customer', value: _booking['full_name'] ?? _booking['merchant_name'] ?? '-'),
                 ],
               ),
             ),
             const SizedBox(height: 40),
 
-            // Complete trip button
             if (_isUpdating)
               const Center(child: CircularProgressIndicator())
             else
@@ -180,51 +169,6 @@ class _DriverActiveTripScreenState extends State<DriverActiveTripScreen> {
   }
 }
 
-class _RouteCard extends StatelessWidget {
-  final String pickup;
-  final String delivery;
-  const _RouteCard({required this.pickup, required this.delivery});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.circle_outlined, size: 14, color: Color(0xFF1A56DB)),
-              const SizedBox(width: 10),
-              Expanded(child: Text(pickup, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500))),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: 6),
-            child: Column(
-              children: List.generate(3, (_) => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 2),
-                child: Align(alignment: Alignment.centerLeft, child: Icon(Icons.more_vert, size: 10, color: Colors.grey)),
-              )),
-            ),
-          ),
-          Row(
-            children: [
-              const Icon(Icons.location_on, size: 14, color: Color(0xFF10B981)),
-              const SizedBox(width: 10),
-              Expanded(child: Text(delivery, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600))),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
@@ -236,7 +180,7 @@ class _InfoRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
-          SizedBox(width: 80, child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13))),
+          SizedBox(width: 90, child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13))),
           Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
         ],
       ),

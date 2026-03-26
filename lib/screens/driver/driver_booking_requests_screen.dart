@@ -20,7 +20,7 @@ class DriverBookingRequestsScreen extends StatefulWidget {
 class _DriverBookingRequestsScreenState extends State<DriverBookingRequestsScreen> {
   static const String _baseUrl = 'http://ov3.238.mytemp.website/pasabaybcd/api';
 
-  Map<String, dynamic>? _driverData;
+  Map<String, dynamic>? _userData;
   List<dynamic> _bookings = [];
   bool _isLoading = true;
 
@@ -32,24 +32,30 @@ class _DriverBookingRequestsScreenState extends State<DriverBookingRequestsScree
 
   Future<void> _loadAndFetch() async {
     final prefs = await SharedPreferences.getInstance();
-    final driverJson = prefs.getString('driverData');
-    if (driverJson != null) _driverData = json.decode(driverJson);
+    final userJson = prefs.getString('userData');
+    if (userJson != null) {
+      setState(() => _userData = json.decode(userJson));
+    } else {
+      setState(() => _isLoading = false);
+      return;
+    }
     await _fetchBookings();
   }
 
   Future<void> _fetchBookings() async {
-    if (_driverData == null) return;
+    if (_userData == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() => _isLoading = true);
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/driver_bookings.php'),
-        body: {
-          'payload': json.encode({'driver_id': _driverData!['driver_id']}),
-        },
+      final driverId = _userData!['id'];
+      final response = await http.get(
+        Uri.parse('$_baseUrl/driver_bookings.php?driver_id=$driverId'),
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        setState(() => _bookings = data['bookings'] ?? []);
+        setState(() => _bookings = data is List ? data : []);
       }
     } catch (_) {}
     setState(() => _isLoading = false);
@@ -61,7 +67,6 @@ class _DriverBookingRequestsScreenState extends State<DriverBookingRequestsScree
         Uri.parse('$_baseUrl/driver_update_status.php'),
         body: {
           'payload': json.encode({
-            'driver_id': _driverData!['driver_id'],
             'booking_id': bookingId,
             'status': status,
           }),
@@ -74,8 +79,8 @@ class _DriverBookingRequestsScreenState extends State<DriverBookingRequestsScree
   Color _statusColor(String? status) {
     switch (status) {
       case 'pending': return const Color(0xFFF59E0B);
-      case 'accepted': return const Color(0xFF10B981);
-      case 'rejected': return const Color(0xFFEF4444);
+      case 'confirmed': return const Color(0xFF10B981);
+      case 'cancelled': return const Color(0xFFEF4444);
       case 'in_transit': return const Color(0xFF1A56DB);
       case 'completed': return const Color(0xFF6B7280);
       default: return const Color(0xFF6B7280);
@@ -122,7 +127,7 @@ class _DriverBookingRequestsScreenState extends State<DriverBookingRequestsScree
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('Booking #${b['booking_id']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                                  Text('Booking #${b['id']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
@@ -137,17 +142,18 @@ class _DriverBookingRequestsScreenState extends State<DriverBookingRequestsScree
                                 ],
                               ),
                               const SizedBox(height: 10),
-                              _AddressRow(icon: Icons.circle_outlined, label: b['pickup_address'] ?? '-'),
+                              _InfoRow(icon: Icons.category_outlined, label: 'Category: ${b['cargo_category'] ?? '-'}'),
                               const SizedBox(height: 4),
-                              _AddressRow(icon: Icons.location_on_outlined, label: b['delivery_address'] ?? '-'),
-                              if (status == 'pending') ...
-                              [
+                              _InfoRow(icon: Icons.person_outline, label: b['full_name'] ?? b['merchant_name'] ?? 'Unknown Customer'),
+                              const SizedBox(height: 4),
+                              _InfoRow(icon: Icons.attach_money, label: '₱${b['estimated_fee'] ?? '-'}'),
+                              if (status == 'pending') ...[
                                 const SizedBox(height: 12),
                                 Row(
                                   children: [
                                     Expanded(
                                       child: OutlinedButton(
-                                        onPressed: () => _updateStatus(b['booking_id'].toString(), 'rejected'),
+                                        onPressed: () => _updateStatus(b['id'].toString(), 'cancelled'),
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: const Color(0xFFEF4444),
                                           side: const BorderSide(color: Color(0xFFEF4444)),
@@ -159,9 +165,10 @@ class _DriverBookingRequestsScreenState extends State<DriverBookingRequestsScree
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: ElevatedButton(
-                                        onPressed: () => _updateStatus(b['booking_id'].toString(), 'accepted'),
+                                        onPressed: () => _updateStatus(b['id'].toString(), 'confirmed'),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color(0xFF10B981),
+                                          foregroundColor: Colors.white,
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                         ),
                                         child: const Text('Accept'),
@@ -181,10 +188,10 @@ class _DriverBookingRequestsScreenState extends State<DriverBookingRequestsScree
   }
 }
 
-class _AddressRow extends StatelessWidget {
+class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
-  const _AddressRow({required this.icon, required this.label});
+  const _InfoRow({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {

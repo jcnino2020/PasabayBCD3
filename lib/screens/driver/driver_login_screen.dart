@@ -1,7 +1,6 @@
 // ============================================================
 // Driver Login Screen
-// Uses driver_id + phone number to authenticate
-// Calls: POST /api/driver_login.php
+// Separate login entry point for drivers
 // ============================================================
 
 import 'package:flutter/material.dart';
@@ -18,27 +17,28 @@ class DriverLoginScreen extends StatefulWidget {
 }
 
 class _DriverLoginScreenState extends State<DriverLoginScreen> {
-  final _idController = TextEditingController();
-  final _phoneController = TextEditingController();
+  static const String _baseUrl = 'http://ov3.238.mytemp.website/pasabaybcd/api';
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
   bool _isLoading = false;
   String? _errorMessage;
 
-  static const String _baseUrl = 'http://ov3.238.mytemp.website/pasabaybcd/api';
-
   @override
   void dispose() {
-    _idController.dispose();
-    _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
-    final driverId = _idController.text.trim();
-    final phone = _phoneController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
     setState(() => _errorMessage = null);
 
-    if (driverId.isEmpty || phone.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       setState(() => _errorMessage = 'Please fill in all fields.');
       return;
     }
@@ -47,38 +47,34 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/driver_login.php'),
+        Uri.parse('$_baseUrl/login.php'),
         body: {
-          'payload': json.encode({
-            'driver_id': driverId,
-            'phone': phone,
-          }),
+          'payload': json.encode({'email': email, 'password': password}),
         },
       );
 
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true || data['driver'] != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('driverData', json.encode(data['driver'] ?? data));
-          await prefs.setBool('isDriver', true);
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const DriverMainScreen()),
-          );
-        } else {
-          setState(() => _errorMessage = data['error'] ?? 'Login failed. Check your credentials.');
+        final userData = json.decode(response.body);
+        if (userData['role'] != 'driver') {
+          setState(() => _errorMessage = 'This account is not a driver account.');
+          return;
         }
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userData', json.encode(userData));
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DriverMainScreen()),
+        );
       } else {
-        final err = json.decode(response.body);
-        setState(() => _errorMessage = err['error'] ?? 'Server error. Try again.');
+        final errorData = json.decode(response.body);
+        setState(() => _errorMessage = errorData['error'] ?? 'Login failed.');
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'Connection error. Please try again.');
+      setState(() => _errorMessage = 'Network error. Please try again.');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -95,104 +91,86 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 40),
-              // Driver badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A56DB).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.local_shipping_outlined, size: 16, color: Color(0xFF1A56DB)),
-                    SizedBox(width: 6),
-                    Text('Driver Portal', style: TextStyle(color: Color(0xFF1A56DB), fontWeight: FontWeight.w600, fontSize: 13)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Driver Sign In',
-                style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Color(0xFF111827)),
-              ),
+              const Text('Driver Login', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, color: Color(0xFF111827))),
               const SizedBox(height: 6),
-              Text(
-                'Access your assigned bookings and trips.',
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-              ),
+              Text('Sign in to manage your deliveries.', style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
               const SizedBox(height: 40),
-              _buildLabel('DRIVER ID'),
+              const Text('EMAIL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey, letterSpacing: 1.2)),
               const SizedBox(height: 8),
-              _buildTextField(_idController, 'e.g. DRV-001', TextInputType.text),
-              const SizedBox(height: 20),
-              _buildLabel('PHONE NUMBER'),
-              const SizedBox(height: 8),
-              _buildTextField(_phoneController, 'e.g. 09171234567', TextInputType.phone),
-              const SizedBox(height: 24),
-              if (_errorMessage != null)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF2F2),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFFCA5A5)),
-                  ),
-                  child: Text(_errorMessage!, style: const TextStyle(color: Color(0xFFDC2626), fontSize: 15)),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: 'driver@email.com',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1A56DB), width: 1.5)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
+              ),
+              const SizedBox(height: 20),
+              const Text('PASSWORD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey, letterSpacing: 1.2)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _passwordController,
+                obscureText: !_isPasswordVisible,
+                decoration: InputDecoration(
+                  hintText: '••••••••',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1A56DB), width: 1.5)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  suffixIcon: IconButton(
+                    icon: Icon(_isPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.grey, size: 22),
+                    onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Color(0xFFEF4444), size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(_errorMessage!, style: const TextStyle(color: Color(0xFFEF4444), fontSize: 13))),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 28),
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 54,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A56DB),
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFF1A56DB).withOpacity(0.6),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
                   ),
                   child: _isLoading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Sign In as Driver', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Center(
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Back to Merchant Login', style: TextStyle(color: Color(0xFF1A56DB), fontSize: 15)),
+                      ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                      : const Text('Sign In', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.grey, letterSpacing: 1.2),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String hint, TextInputType type) {
-    return TextField(
-      controller: controller,
-      keyboardType: type,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey.shade400),
-        filled: true,
-        fillColor: Colors.grey.shade50,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1A56DB), width: 1.5)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }
