@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../models/booking.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/truck.dart';
 import '../widgets/truck_card.dart';
@@ -24,6 +25,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
   String _selectedLocation = 'Libertad Market';
   String _selectedVehicleType = 'All';
   String _sortBy = 'Rating';
+  String _userName = '';
 
   late Future<List<Truck>> _trucksFuture;
   final String _apiBaseUrl = 'http://ov3.238.mytemp.website/pasabaybcd/api/trucks.php';
@@ -33,6 +35,24 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
     super.initState();
     _trucksFuture = _fetchTrucks();
     _searchController.addListener(_onSearchChanged);
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('userData');
+    if (userJson != null) {
+      final userData = json.decode(userJson);
+      final fullName = (userData['full_name'] ?? userData['name'] ?? '') as String;
+      setState(() => _userName = fullName.split(' ').first);
+    }
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
   }
 
   @override
@@ -204,6 +224,20 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Greeting
+          if (_userName.isNotEmpty) ...[
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(fontSize: 20, color: Color(0xFF111827)),
+                children: [
+                  TextSpan(text: '${_getGreeting()}, ', style: const TextStyle(fontWeight: FontWeight.w400)),
+                  TextSpan(text: '$_userName!', style: const TextStyle(fontWeight: FontWeight.w800)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
           // Location pin row
           GestureDetector(
             onTap: _showLocationPicker,
@@ -257,7 +291,6 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Simplified header matching wireframe
             _buildHeader(),
 
             // Section header with filter button
@@ -308,7 +341,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
               ),
             ),
 
-            // Truck list - scrollable
+            // Truck list
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _refreshTrucks,
