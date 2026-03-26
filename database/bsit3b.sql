@@ -3,10 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Mar 26, 2026 at 12:21 AM
+-- Generation Time: Mar 26, 2026 at 03:45 AM
 -- Server version: 10.6.24-MariaDB-cll-lve
 -- PHP Version: 8.3.30
--- NOTE: Orphaned empty-ID booking row has been removed from this reference dump.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -44,7 +43,6 @@ CREATE TABLE `pasabaybcd_bookings` (
 
 --
 -- Dumping data for table `pasabaybcd_bookings`
--- (orphaned empty-ID row removed)
 --
 
 INSERT INTO `pasabaybcd_bookings` (`id`, `user_id`, `truck_id`, `driver_name`, `cargo_category`, `cargo_weight_kg`, `cargo_quantity`, `estimated_fee`, `cargo_photo_url`, `status`, `created_at`, `completed_at`) VALUES
@@ -148,16 +146,34 @@ CREATE TABLE `pasabaybcd_images` (
 --
 
 CREATE TABLE `pasabaybcd_notifications` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `type` varchar(30) NOT NULL DEFAULT 'system',
   `title` varchar(255) NOT NULL,
   `body` text NOT NULL,
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `pasabaybcd_notifications` (`id`, `user_id`, `type`, `title`, `body`, `is_read`, `created_at`) VALUES
+(1, 1, 'system', 'Welcome to PasabayBCD!', 'Thank you for joining. Start by booking your first shared delivery.', 0, '2026-03-26 07:22:49'),
+(2, 1, 'promo', 'Weekend Promo!', 'Get 15% off your next booking this Saturday & Sunday.', 0, '2026-03-26 07:22:49'),
+(3, 1, 'wallet', 'Top-Up Successful', 'Your wallet has been topped up with ₱500 via GCash.', 0, '2026-03-26 07:22:49');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pasabaybcd_password_resets`
+--
+
+CREATE TABLE `pasabaybcd_password_resets` (
+  `id` int(11) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `token` varchar(64) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `expires_at` timestamp NOT NULL DEFAULT (current_timestamp() + interval 1 hour),
+  `used` tinyint(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -179,18 +195,15 @@ CREATE TABLE `pasabaybcd_payment` (
 --
 
 CREATE TABLE `pasabaybcd_ratings` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `driver_id` int(11) NOT NULL,
   `booking_id` varchar(50) DEFAULT NULL,
-  `rating` tinyint(1) NOT NULL CHECK (`rating` BETWEEN 1 AND 5),
+  `rating` tinyint(1) NOT NULL CHECK (`rating` between 1 and 5),
   `tags` text DEFAULT NULL,
   `review_text` text DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  KEY `driver_id` (`driver_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -314,7 +327,6 @@ INSERT INTO `pasabaybcd_trucks` (`id`, `driver_id`, `type`, `plate_number`, `cap
 
 --
 -- Table structure for table `pasabaybcd_users`
--- NOTE: role column added via migration.sql
 --
 
 CREATE TABLE `pasabaybcd_users` (
@@ -329,14 +341,13 @@ CREATE TABLE `pasabaybcd_users` (
   `profile_photo_url` varchar(255) DEFAULT NULL,
   `is_kyc_verified` tinyint(1) NOT NULL DEFAULT 0,
   `wallet_balance` decimal(10,2) NOT NULL DEFAULT 0.00,
-  `role` varchar(20) NOT NULL DEFAULT 'passenger',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
-INSERT INTO `pasabaybcd_users` (`id`, `email`, `password_hash`, `full_name`, `business_permit_number`, `id_photo_url`, `merchant_name`, `market_location`, `profile_photo_url`, `is_kyc_verified`, `wallet_balance`, `role`, `created_at`) VALUES
-(1, 'aling.nena@email.com', '$2y$10$VCojEQ7hLcK/PBUHfItOHuPfURXTy8DryC4kOocvFomuyw6f5u/V6', 'Hey', '928282882', 'http://ov3.238.mytemp.website/pasabaybcd/uploads/kyc/kyc-1-1773112408.jpg', 'Aling Nena\'s Stall', 'Libertad Market, Aisle 9', NULL, 1, 2260.00, 'passenger', '2026-03-09 11:56:30'),
-(2, 'john@email.com', '$2y$10$OoqKOu7kyozKtLTDvPUkM.iRqJxUR88NRATAZbAk3da8fR87rLE.G', 'John', NULL, NULL, '', NULL, NULL, 0, 0.00, 'passenger', '2026-03-11 01:13:20'),
-(3, 'fish@gmail.com', '$2y$10$IdpkQGkqoUz7A3G0wok9TesxAK1REugGlasWCH4.6mfJIV1sqAjZ6', 'Fish', NULL, NULL, '', NULL, NULL, 0, 500.00, 'passenger', '2026-03-11 01:13:52');
+INSERT INTO `pasabaybcd_users` (`id`, `email`, `password_hash`, `full_name`, `business_permit_number`, `id_photo_url`, `merchant_name`, `market_location`, `profile_photo_url`, `is_kyc_verified`, `wallet_balance`, `created_at`) VALUES
+(1, 'aling.nena@email.com', '$2y$10$VCojEQ7hLcK/PBUHfItOHuPfURXTy8DryC4kOocvFomuyw6f5u/V6', 'Hey', '928282882', 'http://ov3.238.mytemp.website/pasabaybcd/uploads/kyc/kyc-1-1773112408.jpg', 'Aling Nena\'s Stall', 'Libertad Market, Aisle 9', NULL, 1, 2260.00, '2026-03-09 11:56:30'),
+(2, 'john@email.com', '$2y$10$OoqKOu7kyozKtLTDvPUkM.iRqJxUR88NRATAZbAk3da8fR87rLE.G', 'John', NULL, NULL, '', NULL, NULL, 0, 0.00, '2026-03-11 01:13:20'),
+(3, 'fish@gmail.com', '$2y$10$IdpkQGkqoUz7A3G0wok9TesxAK1REugGlasWCH4.6mfJIV1sqAjZ6', 'Fish', NULL, NULL, '', NULL, NULL, 0, 500.00, '2026-03-11 01:13:52');
 
 -- --------------------------------------------------------
 
@@ -352,7 +363,7 @@ CREATE TABLE `pasabaybcd_vehicle` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Indexes
+-- Indexes for dumped tables
 --
 
 ALTER TABLE `pasabaybcd_bookings`
@@ -370,6 +381,11 @@ ALTER TABLE `pasabaybcd_images`
 ALTER TABLE `pasabaybcd_notifications`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_id` (`user_id`);
+
+ALTER TABLE `pasabaybcd_password_resets`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `email` (`email`),
+  ADD KEY `token` (`token`);
 
 ALTER TABLE `pasabaybcd_payment`
   ADD PRIMARY KEY (`transaction_id`);
@@ -400,7 +416,7 @@ ALTER TABLE `pasabaybcd_vehicle`
   ADD PRIMARY KEY (`plate_number`);
 
 --
--- AUTO_INCREMENT
+-- AUTO_INCREMENT for dumped tables
 --
 
 ALTER TABLE `pasabaybcd_drivers`
@@ -410,7 +426,10 @@ ALTER TABLE `pasabaybcd_images`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `pasabaybcd_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+ALTER TABLE `pasabaybcd_password_resets`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 ALTER TABLE `pasabaybcd_ratings`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
@@ -425,7 +444,7 @@ ALTER TABLE `pasabaybcd_users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- Constraints
+-- Constraints for dumped tables
 --
 
 ALTER TABLE `pasabaybcd_bookings`
