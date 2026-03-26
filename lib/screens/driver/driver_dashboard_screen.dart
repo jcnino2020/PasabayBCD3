@@ -20,7 +20,7 @@ class DriverDashboardScreen extends StatefulWidget {
 class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
   static const String _baseUrl = 'http://ov3.238.mytemp.website/pasabaybcd/api';
 
-  Map<String, dynamic>? _driverData;
+  Map<String, dynamic>? _userData;
   List<dynamic> _pendingBookings = [];
   Map<String, dynamic>? _activeBooking;
   bool _isLoading = true;
@@ -33,36 +33,34 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    final driverJson = prefs.getString('driverData');
-    if (driverJson != null) {
-      setState(() => _driverData = json.decode(driverJson));
+    final userJson = prefs.getString('userData');
+    if (userJson != null) {
+      setState(() => _userData = json.decode(userJson));
+    } else {
+      setState(() => _isLoading = false);
+      return;
     }
     await _fetchBookings();
   }
 
   Future<void> _fetchBookings() async {
-    if (_driverData == null) return;
+    if (_userData == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
     setState(() => _isLoading = true);
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/driver_bookings.php'),
-        body: {
-          'payload': json.encode({
-            'driver_id': _driverData!['driver_id'],
-            'status': 'pending',
-          }),
-        },
+      final driverId = _userData!['id'];
+      final response = await http.get(
+        Uri.parse('$_baseUrl/driver_bookings.php?driver_id=$driverId'),
       );
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final bookings = (data['bookings'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+        final bookings = (json.decode(response.body) as List).cast<Map<String, dynamic>>();
         setState(() {
           _pendingBookings = bookings.where((b) => b['status'] == 'pending').toList();
-          _activeBooking = bookings.firstWhere(
-            (b) => b['status'] == 'accepted' || b['status'] == 'in_transit',
-            orElse: () => <String, dynamic>{},
-          );
-          if (_activeBooking != null && (_activeBooking as Map).isEmpty) _activeBooking = null;
+          final active = bookings.where((b) =>
+              b['status'] == 'confirmed' || b['status'] == 'in_transit').toList();
+          _activeBooking = active.isNotEmpty ? active.first : null;
         });
       }
     } catch (_) {}
@@ -71,7 +69,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final driverName = _driverData?['name'] ?? _driverData?['driver_name'] ?? 'Driver';
+    final driverName = _userData?['full_name'] ?? _userData?['name'] ?? 'Driver';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -127,8 +125,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     const SizedBox(height: 28),
 
                     // Active trip card
-                    if (_activeBooking != null) ...
-                    [
+                    if (_activeBooking != null) ...[
                       const Text('Active Trip', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF111827))),
                       const SizedBox(height: 12),
                       _ActiveTripCard(
@@ -223,7 +220,7 @@ class _ActiveTripCard extends StatelessWidget {
               children: [
                 const Icon(Icons.local_shipping, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
-                Text('Booking #${booking['booking_id'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                Text('Booking #${booking['id'] ?? ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -270,8 +267,8 @@ class _PendingBookingTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Booking #${booking['booking_id'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                Text(booking['pickup_address'] ?? '', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                Text('Booking #${booking['id'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(booking['cargo_category'] ?? '', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
               ],
             ),
           ),
