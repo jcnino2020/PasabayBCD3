@@ -14,6 +14,7 @@ import 'main_screen.dart';
 import 'onboarding_screen.dart';
 import 'login_screen.dart';
 import 'error_screen.dart';
+import 'driver/driver_main_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -44,12 +45,17 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
-    // If logged in, go straight to main
+    // If logged in, route based on role
     if (userDataString != null) {
       try {
         final userData = json.decode(userDataString);
         DataStore().setUserData(userData);
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScreen()));
+        final role = userData['role'] ?? 'passenger';
+        if (role == 'driver') {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DriverMainScreen()));
+        } else {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScreen()));
+        }
         return;
       } catch (e) {
         debugPrint('Failed to parse saved user data: $e');
