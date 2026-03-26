@@ -1,6 +1,7 @@
 // ============================================================
 // Screen 01: Splash Screen
-// Shows the app logo and name, auto-navigates after 2 seconds
+// Shows the app logo and name, auto-navigates after 2 seconds.
+// Checks for saved session AND onboarding_seen flag.
 // ============================================================
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,8 @@ import 'dart:convert';
 import '../models/booking.dart';
 import 'main_screen.dart';
 import 'onboarding_screen.dart';
+import 'login_screen.dart';
+import 'error_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -21,61 +24,47 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
-  // Animation controller for the logo fade-in effect
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-
-    // Set up a simple fade-in animation
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
     _controller.forward();
-
-    // Check for a saved session instead of just waiting
     _checkSession();
   }
 
   void _checkSession() async {
-    // Wait for splash animation to be visible for a bit
     await Future.delayed(const Duration(milliseconds: 2000));
-
     final prefs = await SharedPreferences.getInstance();
-    // Check for the saved user data JSON string, which is now saved by the login screen.
     final userDataString = prefs.getString('userData');
+    final onboardingSeen = prefs.getBool('onboarding_seen') ?? false;
 
+    if (!mounted) return;
+
+    // If logged in, go straight to main
     if (userDataString != null) {
-      // User session found. Restore the session data directly without a network call.
-      if (mounted) {
-        try {
-          final userData = json.decode(userDataString);
-          DataStore().setUserData(userData);
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const MainScreen()),
-          );
-          return; // Exit function on success
-        } catch (e) {
-          // If JSON is corrupted or data is invalid, clear it and proceed to login.
-          debugPrint("Failed to parse saved user data: $e");
-          await prefs.remove('userData');
-        }
+      try {
+        final userData = json.decode(userDataString);
+        DataStore().setUserData(userData);
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScreen()));
+        return;
+      } catch (e) {
+        debugPrint('Failed to parse saved user data: $e');
+        await prefs.remove('userData');
       }
     }
 
-    // If no session is found or restoring it fails, go to onboarding
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
-      );
+    // If onboarding was already seen, go to login directly
+    if (onboardingSeen) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+      return;
     }
+
+    // First time user — show onboarding
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const OnboardingScreen()));
   }
 
   @override
@@ -92,59 +81,51 @@ class _SplashScreenState extends State<SplashScreen>
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // App logo - hexagon icon with truck
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A56DB),
-                  borderRadius: BorderRadius.circular(22),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A56DB),
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: const Icon(Icons.local_shipping, color: Colors.white, size: 52),
                 ),
-                child: const Icon(
-                  Icons.local_shipping,
-                  color: Colors.white,
-                  size: 52,
+                const SizedBox(height: 20),
+                const Text(
+                  'PasabayBCD',
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                    letterSpacing: -0.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              // App name
-              const Text(
-                'PasabayBCD',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                  letterSpacing: -0.5,
+                const SizedBox(height: 6),
+                Text(
+                  'SME LOGISTICS HUB',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade500,
+                    letterSpacing: 2.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              // Tagline
-              Text(
-                'SME LOGISTICS HUB',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade500,
-                  letterSpacing: 2.5,
+                const SizedBox(height: 60),
+                SizedBox(
+                  width: 40,
+                  child: LinearProgressIndicator(
+                    backgroundColor: Colors.grey.shade200,
+                    color: const Color(0xFF1A56DB),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 60),
-              // Loading indicator
-              SizedBox(
-                width: 40,
-                child: LinearProgressIndicator(
-                  backgroundColor: Colors.grey.shade200,
-                  color: const Color(0xFF1A56DB),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
