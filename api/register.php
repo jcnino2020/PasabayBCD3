@@ -21,9 +21,10 @@ if (json_last_error() !== JSON_ERROR_NONE) {
     exit();
 }
 
-$name = $data['name'] ?? null;
-$email = $data['email'] ?? null;
-$password = $data['password'] ?? null;
+$name          = $data['name'] ?? null;
+$email         = $data['email'] ?? null;
+$password      = $data['password'] ?? null;
+$merchantName  = $data['merchant_name'] ?? '';
 
 if (empty($name) || empty($email) || empty($password)) {
     http_response_code(400);
@@ -68,14 +69,14 @@ if ($stmt->num_rows > 0) {
 $stmt->close();
 
 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-// FIX: column is password_hash not password
-$stmt = $conn->prepare("INSERT INTO pasabaybcd_users (full_name, email, password_hash) VALUES (?, ?, ?)");
+
+$stmt = $conn->prepare("INSERT INTO pasabaybcd_users (full_name, email, password_hash, merchant_name) VALUES (?, ?, ?, ?)");
 if ($stmt === false) {
     http_response_code(500);
     echo json_encode(['error' => 'SQL prepare failed (INSERT): ' . $conn->error]);
     exit();
 }
-$stmt->bind_param("sss", $name, $email, $hashed_password);
+$stmt->bind_param("ssss", $name, $email, $hashed_password, $merchantName);
 
 if ($stmt->execute()) {
     http_response_code(201);
