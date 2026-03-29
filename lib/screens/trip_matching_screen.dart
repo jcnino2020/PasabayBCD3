@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'dart:math';
 import '../models/booking.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -117,7 +118,10 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      return data.map((json) => Truck.fromJson(json)).toList();
+      final trucks = data.map((json) => Truck.fromJson(json)).toList();
+      // Randomize order on every fetch so the listing feels fresh
+      trucks.shuffle(Random());
+      return trucks;
     } else {
       throw Exception('Failed to load trucks. Status code: ${response.statusCode}');
     }
@@ -343,7 +347,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
     );
   }
 
-  // NEW: Quick Stats Row
+  // Quick Stats Row
   Widget _buildQuickStats() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -376,7 +380,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
     );
   }
 
-  // NEW: Promo Banner Carousel
+  // Promo Banner Carousel
   Widget _buildPromoBanner() {
     return Column(
       children: [
@@ -461,7 +465,7 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
     );
   }
 
-  // NEW: Quick Action Buttons
+  // Quick Action Buttons
   Widget _buildQuickActions() {
     final actions = [
       {
