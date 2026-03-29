@@ -226,44 +226,84 @@ class _LiveTrackingScreenState extends State<LiveTrackingScreen>
     super.dispose();
   }
 
+  Widget _buildNoActiveTrip() {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFF),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.local_shipping_outlined,
+                  size: 72, color: Colors.grey.shade300),
+              const SizedBox(height: 16),
+              Text(
+                'No active trips',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Book a truck to start tracking your shipment.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade400),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // Switch to the Trip Matching tab (index 0)
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => const MainScreen(initialIndex: 0),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text(
+                    'Book',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A56DB),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Resolve booking from args or DataStore
     final activeBooking = DataStore().activeBooking;
-    
-    // If no active booking, show empty state
+
+    // If no active booking, show empty state with Book button
     if (activeBooking == null) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFF),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.local_shipping_outlined, size: 64, color: Colors.grey.shade300),
-              const SizedBox(height: 16),
-              Text('No active trips', style: TextStyle(color: Colors.grey.shade500)),
-            ],
-          ),
-        ),
-      );
+      return _buildNoActiveTrip();
     }
 
     // Use the truck stored in DataStore (set during booking confirmation)
     final activeTruck = DataStore().activeTruck;
     if (activeTruck == null) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFF),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.local_shipping_outlined, size: 64, color: Colors.grey.shade300),
-              const SizedBox(height: 16),
-              Text('No active trips', style: TextStyle(color: Colors.grey.shade500)),
-            ],
-          ),
-        ),
-      );
+      return _buildNoActiveTrip();
     }
 
     return Scaffold(
