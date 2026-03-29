@@ -17,8 +17,14 @@ import 'driver_confirmation_screen.dart';
 
 class CargoFormScreen extends StatefulWidget {
   final Truck truck;
+  // Pickup location passed down from TripMatchingScreen
+  final String selectedLocation;
 
-  const CargoFormScreen({super.key, required this.truck});
+  const CargoFormScreen({
+    super.key,
+    required this.truck,
+    required this.selectedLocation,
+  });
 
   @override
   State<CargoFormScreen> createState() => _CargoFormScreenState();
@@ -55,7 +61,7 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
   Future<void> _snapPhoto() async {
     final XFile? photo = await _picker.pickImage(
       source: ImageSource.camera,
-      imageQuality: 85, // Initial compression
+      imageQuality: 85,
     );
 
     if (photo != null) {
@@ -71,7 +77,6 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
     img.Image? image = img.decodeImage(bytes);
     if (image == null) return originalFile;
 
-    // Resize if width > maxWidth
     if (image.width > maxWidth) {
       image = img.copyResize(image, width: maxWidth);
     }
@@ -99,49 +104,40 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
     setState(() => _isUploading = true);
 
     try {
-      // 1. Resize the image before uploading
       final File resizedFile = await _resizeImage(_cargoPhoto!);
 
-      // 2. Prepare the multipart request
       final uri =
           Uri.parse('http://ov3.238.mytemp.website/pasabaybcd/api/bookings.php');
       final request = http.MultipartRequest('POST', uri);
 
-      // 3. Add text fields (booking data)
       final dataStore = DataStore();
       request.fields['user_id'] = dataStore.userId?.toString() ?? '0';
       request.fields['truck_id'] = widget.truck.id;
       request.fields['driver_name'] = widget.truck.driverName;
+      request.fields['pickup_location'] = widget.selectedLocation; // now dynamic
       request.fields['cargo_category'] = _selectedCategory;
       request.fields['weight_kg'] = _weight.toString();
       request.fields['quantity'] = _quantity.toString();
       request.fields['estimated_fee'] = _estimatedFee.toString();
 
-      // 4. Add the image file
       request.files.add(await http.MultipartFile.fromPath(
-        'cargo_photo', // API parameter name for the file
+        'cargo_photo',
         resizedFile.path,
         contentType: MediaType('image', 'jpeg'),
       ));
 
-      // 5. Send the request and wait for response
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
 
       if (!mounted) return;
 
-      // 6. Handle the response
-      if (response.statusCode == 201) { // 201 Created is a good practice for POST
+      if (response.statusCode == 201) {
         if (responseBody.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Booking failed: Server returned an empty response.'), backgroundColor: Colors.red));
           return;
         }
         final responseData = json.decode(responseBody);
-
-        // Create a Booking object from the server's response
         final newBooking = Booking.fromJson(responseData['booking']);
-
-        // Navigate to the confirmation screen
         Navigator.push(context, MaterialPageRoute(builder: (_) => DriverConfirmationScreen(truck: widget.truck, booking: newBooking)));
       } else {
         if (responseBody.isEmpty) {
@@ -222,7 +218,24 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                 color: Color(0xFF111827),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+
+            // Pickup location chip
+            Row(
+              children: [
+                const Icon(Icons.location_on, color: Color(0xFF1A56DB), size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  'Pickup: ${widget.selectedLocation}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A56DB),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
 
             // Snap photo section
             GestureDetector(
@@ -239,7 +252,6 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                     width: 1.5,
                   ),
                 ),
-                // Show the captured image or the prompt to take one.
                 child: _cargoPhoto != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(12.5),
@@ -287,7 +299,6 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                 final isSelected = _selectedCategory == cat['label'];
                 return GestureDetector(
                   onTap: () {
-                    // Update selected category using setState
                     setState(() => _selectedCategory = cat['label']);
                   },
                   child: Container(
@@ -345,7 +356,6 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // Custom stepper control
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
@@ -471,7 +481,6 @@ class _CargoFormScreenState extends State<CargoFormScreen> {
                   ],
                 ),
                 const SizedBox(width: 20),
-                // Confirm button
                 Expanded(
                   child: SizedBox(
                     height: 56,

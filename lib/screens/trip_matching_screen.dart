@@ -669,7 +669,13 @@ class _TripMatchingScreenState extends State<TripMatchingScreen> {
                                 onTap: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (_) => TripDetailsScreen(truck: truck)),
+                                    MaterialPageRoute(
+                                      // Pass _selectedLocation to TripDetailsScreen
+                                      builder: (_) => TripDetailsScreen(
+                                        truck: truck,
+                                        selectedLocation: _selectedLocation,
+                                      ),
+                                    ),
                                   );
                                 },
                               );

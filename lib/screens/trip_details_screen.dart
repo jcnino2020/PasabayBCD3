@@ -4,8 +4,14 @@ import 'cargo_form_screen.dart';
 
 class TripDetailsScreen extends StatelessWidget {
   final Truck truck;
+  // Receives the market location selected on TripMatchingScreen
+  final String selectedLocation;
 
-  const TripDetailsScreen({super.key, required this.truck});
+  const TripDetailsScreen({
+    super.key,
+    required this.truck,
+    required this.selectedLocation,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +111,8 @@ class TripDetailsScreen extends StatelessWidget {
                       // Route Details
                       const Text("ROUTE DETAILS", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.5)),
                       const SizedBox(height: 16),
+                      // Show the user's selected pickup location
+                      _buildDetailRow(Icons.location_on_outlined, "Pickup From", selectedLocation),
                       _buildDetailRow(Icons.route_outlined, "Route", truck.route),
                       _buildDetailRow(Icons.schedule_outlined, "Departs Around", truck.departTime),
                       const SizedBox(height: 32),
@@ -117,7 +125,13 @@ class TripDetailsScreen extends StatelessWidget {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => CargoFormScreen(truck: truck)),
+                              MaterialPageRoute(
+                                // Forward selectedLocation to CargoFormScreen
+                                builder: (_) => CargoFormScreen(
+                                  truck: truck,
+                                  selectedLocation: selectedLocation,
+                                ),
+                              ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
