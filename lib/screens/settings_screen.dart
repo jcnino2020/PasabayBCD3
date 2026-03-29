@@ -1050,9 +1050,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Fixed: uses DataStore.activeBooking (Booking?) instead of non-existent .bookings
   void _showTransactionReceipts() {
     final dataStore = DataStore();
-    final bookings = dataStore.bookings ?? [];
+    final activeBooking = dataStore.activeBooking;
+    final transactions = dataStore.transactions;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1080,7 +1083,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const Divider(),
             Expanded(
-              child: bookings.isEmpty
+              child: (activeBooking == null && transactions.isEmpty)
                   ? const Center(
                       child: Padding(
                         padding: EdgeInsets.all(32),
@@ -1091,31 +1094,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                     )
-                  : ListView.separated(
+                  : ListView(
                       controller: scrollCtrl,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      itemCount: bookings.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (ctx, i) {
-                        final b = bookings[i];
-                        return ListTile(
-                          leading: const Icon(Icons.receipt_outlined,
-                              color: Color(0xFF1A56DB)),
-                          title: Text(b.id ?? 'Booking #${i + 1}',
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      children: [
+                        if (activeBooking != null)
+                          ListTile(
+                            leading: const Icon(Icons.local_shipping_outlined,
+                                color: Color(0xFF1A56DB)),
+                            title: Text('Active: ${activeBooking.id}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14)),
+                            subtitle: Text(
+                                '${activeBooking.cargoCategory} · ${activeBooking.status}',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade500)),
+                            trailing: Text(
+                              '₱${activeBooking.estimatedFee.toStringAsFixed(2)}',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: Text(b.status ?? 'Completed',
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey.shade500)),
-                          trailing: Text(
-                            '₱${b.price?.toStringAsFixed(2) ?? '0.00'}',
-                            style: const TextStyle(
-                                color: Color(0xFF1A56DB),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14),
+                                  color: Color(0xFF1A56DB),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14),
+                            ),
                           ),
-                        );
-                      },
+                        if (activeBooking != null && transactions.isNotEmpty)
+                          const Divider(height: 1),
+                        ...transactions.map((t) => ListTile(
+                              leading: Icon(
+                                t.amount < 0
+                                    ? Icons.receipt_outlined
+                                    : Icons.add_circle_outline,
+                                color: t.amount < 0
+                                    ? Colors.red.shade400
+                                    : const Color(0xFF10B981),
+                              ),
+                              title: Text(t.label,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14)),
+                              subtitle: Text(t.date,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade500)),
+                              trailing: Text(
+                                '₱${t.amount.abs().toStringAsFixed(2)}',
+                                style: TextStyle(
+                                    color: t.amount < 0
+                                        ? Colors.red.shade400
+                                        : const Color(0xFF10B981),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14),
+                              ),
+                            )),
+                      ],
                     ),
             ),
           ],
@@ -1124,13 +1158,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Fixed: uses DataStore.transactions and activeBooking instead of non-existent .bookings
   void _showShippingAnalytics() {
     final dataStore = DataStore();
-    final bookings = dataStore.bookings ?? [];
-    final total = bookings.length;
-    final completed = bookings.where((b) => b.status == 'Completed').length;
-    final totalSpend = bookings.fold<double>(
-        0, (sum, b) => sum + (b.price ?? 0));
+    final transactions = dataStore.transactions;
+    final activeBooking = dataStore.activeBooking;
+
+    final totalTrips = transactions.where((t) => t.amount < 0).length +
+        (activeBooking != null ? 1 : 0);
+    final totalSpend = transactions
+        .where((t) => t.amount < 0)
+        .fold<double>(0, (sum, t) => sum + t.amount.abs()) +
+        (activeBooking?.estimatedFee ?? 0);
+    final totalTopUps = transactions
+        .where((t) => t.amount > 0)
+        .fold<double>(0, (sum, t) => sum + t.amount);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1164,15 +1207,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   _analyticsCard(
                       icon: Icons.local_shipping_outlined,
-                      label: 'Total Bookings',
-                      value: '$total',
+                      label: 'Total Trips',
+                      value: '$totalTrips',
                       color: const Color(0xFF1A56DB)),
-                  const SizedBox(height: 12),
-                  _analyticsCard(
-                      icon: Icons.check_circle_outline,
-                      label: 'Completed',
-                      value: '$completed',
-                      color: const Color(0xFF10B981)),
                   const SizedBox(height: 12),
                   _analyticsCard(
                       icon: Icons.payments_outlined,
@@ -1182,11 +1219,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 12),
                   _analyticsCard(
                       icon: Icons.trending_up_outlined,
-                      label: 'Avg. Per Booking',
-                      value: total > 0
-                          ? '₱${(totalSpend / total).toStringAsFixed(2)}'
+                      label: 'Avg. Per Trip',
+                      value: totalTrips > 0
+                          ? '₱${(totalSpend / totalTrips).toStringAsFixed(2)}'
                           : '₱0.00',
                       color: const Color(0xFF8B5CF6)),
+                  const SizedBox(height: 12),
+                  _analyticsCard(
+                      icon: Icons.account_balance_wallet_outlined,
+                      label: 'Total Top-Ups',
+                      value: '₱${totalTopUps.toStringAsFixed(2)}',
+                      color: const Color(0xFF10B981)),
                 ],
               ),
             ),
@@ -1239,7 +1282,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final dataStore = DataStore();
 
-    // Font size scale via MediaQuery textScaler
     final double fontScale;
     switch (_selectedFontSize) {
       case 'Small':
@@ -1746,7 +1788,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               _divider(),
-              // Accent color picker
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
