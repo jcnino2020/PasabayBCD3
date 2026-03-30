@@ -103,6 +103,10 @@ class BookingConfirmationScreen extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
+                    // Set active booking & truck so tracking tab works
+                    DataStore().setActiveBooking(booking);
+                    DataStore().setActiveTruck(truck);
+
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (_) => const MainScreen()),
@@ -129,6 +133,10 @@ class BookingConfirmationScreen extends StatelessWidget {
                 height: 56,
                 child: OutlinedButton(
                   onPressed: () {
+                    // Set active booking & truck so tracking tab works
+                    DataStore().setActiveBooking(booking);
+                    DataStore().setActiveTruck(truck);
+
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (_) => const MainScreen(initialIndex: 1)),

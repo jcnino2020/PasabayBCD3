@@ -263,9 +263,9 @@ class _TruckIllustration extends StatelessWidget {
             child: Container(
               width: 88,
               height: 52,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: blue,
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(6),
                   topRight: Radius.circular(6),
                 ),
@@ -284,9 +284,9 @@ class _TruckIllustration extends StatelessWidget {
             child: Container(
               width: 46,
               height: 38,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1245A8),
-                borderRadius: const BorderRadius.only(
+              decoration: const BoxDecoration(
+                color: Color(0xFF1245A8),
+                borderRadius: BorderRadius.only(
                   topRight: Radius.circular(10),
                 ),
               ),
@@ -395,9 +395,9 @@ class _BoxIllustration extends StatelessWidget {
             child: Container(
               width: 106,
               height: 22,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1245A8),
-                borderRadius: const BorderRadius.only(
+              decoration: const BoxDecoration(
+                color: Color(0xFF1245A8),
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(10),
                   topRight: Radius.circular(10),
                 ),
@@ -565,9 +565,9 @@ class _MapIllustration extends StatelessWidget {
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: green,
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(14),
                   bottomRight: Radius.circular(8),
                 ),

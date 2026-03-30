@@ -6,14 +6,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import '../models/booking.dart';
 import 'main_screen.dart';
 import 'onboarding_screen.dart';
 import 'login_screen.dart';
-import 'error_screen.dart';
 import 'driver/driver_main_screen.dart';
 
 class SplashScreen extends StatefulWidget {

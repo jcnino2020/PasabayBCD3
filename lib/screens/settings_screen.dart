@@ -412,8 +412,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Icon(icon, color: color, size: 28),
       title: Text(label),
       trailing: linked
-          ? Chip(
-              label: const Text('Linked',
+          ? const Chip(
+              label: Text('Linked',
                   style: TextStyle(fontSize: 12, color: Colors.white)),
               backgroundColor: Colors.green,
               padding: EdgeInsets.zero,
@@ -2275,7 +2275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : null,
       value: value,
       onChanged: onChanged,
-      activeColor: const Color(0xFF1A56DB),
+      activeThumbColor: const Color(0xFF1A56DB),
     );
   }
 

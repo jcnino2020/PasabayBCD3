@@ -12,6 +12,8 @@ import '../models/booking.dart';
 import '../models/truck.dart';
 import 'booking_confirmation_screen.dart';
 import 'trip_matching_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class DriverConfirmationScreen extends StatefulWidget {
   final Truck truck;
@@ -49,78 +51,77 @@ class _DriverConfirmationScreenState extends State<DriverConfirmationScreen> {
   }
 
   Future<void> _checkStatus() async {
-    _pollCount++;
-
-    // Timeout after _maxPolls attempts
-    if (_pollCount > _maxPolls) {
-      _pollingTimer?.cancel();
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'No response from driver after 60 seconds.\nPlease try again or cancel.';
-        });
-      }
-      return;
+  _pollCount++;
+  if (_pollCount > 12) {
+    _pollingTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _errorMessage = 'Driver took too long to respond. Please try again.';
+      });
     }
+    return;
+  }
 
-    try {
-      final uri = Uri.parse('http://ov3.238.mytemp.website/pasabaybcd/api/bookings.php')
-          .replace(queryParameters: {'booking_id': widget.booking.id.toString()});
-      final response = await http.get(uri);
+  try {
+    // Get user_id from SharedPreferences (or however your app stores it)
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id') ?? 1;
 
-      if (!mounted) return;
+    final uri = Uri.parse(
+      'http://ov3.238.mytemp.website/pasabaybcd/api/bookings.php'
+      '?booking_id=${widget.booking.id}&user_id=$userId',
+    );
 
-      if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
+    final response = await http.get(uri);
 
-        // Handle both flat object {"status": "..."} and array [{"status": "..."}]
-        String? status;
-        if (decoded is Map<String, dynamic>) {
-          status = decoded['status'] as String?;
-        } else if (decoded is List && decoded.isNotEmpty) {
-          final first = decoded[0];
-          if (first is Map<String, dynamic>) {
-            status = first['status'] as String?;
-          }
-        }
+    if (!mounted) return;
 
-        if (status == 'confirmed') {
-          _pollingTimer?.cancel();
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BookingConfirmationScreen(
-                booking: widget.booking,
-                truck: widget.truck,
-              ),
-            ),
-          );
-        } else if (status == 'rejected' || status == 'cancelled') {
-          _pollingTimer?.cancel();
-          setState(() {
-            _errorMessage = 'The driver declined this booking.\nPlease choose another driver.';
-          });
-        } else {
-          // Still pending — clear any stale error message
-          if (_errorMessage != null) {
-            setState(() => _errorMessage = null);
-          }
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _errorMessage = 'Server error (${response.statusCode}). Retrying...';
-          });
-        }
+    if (response.statusCode == 200) {
+      final decoded = json.decode(response.body);
+
+      // API returns an ARRAY — find the matching booking
+      Map<String, dynamic>? booking;
+      if (decoded is List && decoded.isNotEmpty) {
+        booking = decoded.firstWhere(
+  (b) => b['id'] == widget.booking.id,  // ← this
+  orElse: () => decoded[0],
+);
+      } else if (decoded is Map) {
+        booking = decoded as Map<String, dynamic>;
       }
-    } catch (e) {
-      debugPrint('Status check error: $e');
-      if (mounted) {
+
+      final status = booking?['status'] as String?;
+
+      if (status == 'confirmed') {
+        _pollingTimer?.cancel();
+Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (_) => BookingConfirmationScreen(
+      truck: widget.truck,
+      booking: widget.booking,
+    ),
+  ),
+);      } else if (status == 'rejected' || status == 'cancelled') {
+        _pollingTimer?.cancel();
         setState(() {
-          _errorMessage = 'Connection error. Retrying...';
+          _errorMessage = 'Booking was declined. Please choose another driver.';
         });
       }
+    } else {
+      setState(() {
+        _errorMessage = 'Server error (${response.statusCode}). Retrying...';
+      });
+    }
+  } catch (e) {
+    debugPrint('Status check error: $e');
+    if (mounted) {
+      setState(() {
+        _errorMessage = 'Connection error. Retrying...';
+      });
     }
   }
+}
 
   void _retryPolling() {
     setState(() {

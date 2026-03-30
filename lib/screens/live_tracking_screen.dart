@@ -12,7 +12,6 @@ import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import '../models/truck.dart';
 import '../models/booking.dart';
 import 'main_screen.dart';
 import 'rating_screen.dart';

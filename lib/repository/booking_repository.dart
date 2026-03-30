@@ -5,7 +5,6 @@
 // ============================================================
 
 import '../database/db_helper.dart';
-import '../models/booking.dart';
 
 class BookingRepository {
   final DbHelper _db = DbHelper();

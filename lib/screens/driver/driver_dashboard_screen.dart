@@ -155,7 +155,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                     ),
                     const SizedBox(height: 12),
                     if (_pendingBookings.isEmpty)
-                      _EmptyState(message: 'No pending booking requests.')
+                      const _EmptyState(message: 'No pending booking requests.')
                     else
                       ..._pendingBookings.take(3).map((b) => _PendingBookingTile(booking: b)),
                   ],
